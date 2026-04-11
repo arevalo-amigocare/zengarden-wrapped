@@ -428,7 +428,14 @@ body::before{
     </div>
   </div>
 
-  <div class="scroll-hint" style="margin-top:auto;padding-top:32px;opacity:0.4;font-family:'Cabin',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);">scroll ↓</div>
+  <!-- Find My Card CTA -->
+  <div class="anim-up-4" style="margin-top:28px;">
+    <button onclick="document.getElementById('slide-8').scrollIntoView({behavior:'smooth'});setTimeout(function(){document.getElementById('crewSearch').focus();},600);" style="background:var(--green);color:#fff;border:none;border-radius:99px;padding:14px 36px;font-family:'Cabin',sans-serif;font-size:14px;font-weight:700;letter-spacing:.06em;cursor:pointer;box-shadow:0 4px 20px rgba(29,158,117,0.3);transition:transform .2s,box-shadow .2s;display:flex;align-items:center;gap:8px;">
+      🔍 Find My Card
+    </button>
+  </div>
+
+  <div class="scroll-hint" style="margin-top:auto;padding-top:24px;opacity:0.4;font-family:'Cabin',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--green);">scroll ↓</div>
 </div>
 
 <!-- ═══════════ SLIDE 2 — DID YOU KNOW ═══════════ -->
@@ -1139,18 +1146,68 @@ function openCrewProfile(idx) {
       </div>
       ${contentHTML}
       <!-- Share button -->
-      <div style="padding:14px 22px 22px;">
+      <div style="padding:14px 22px 6px;">
         <button id="shareCardBtn" style="width:100%;padding:14px;border:none;border-radius:14px;background:linear-gradient(135deg,${nc.accent},${nc.accent}cc);color:#000;font-family:-apple-system,BlinkMacSystemFont,'Cabin',sans-serif;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 20px ${nc.glow}0.3);letter-spacing:.02em;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           Share My Card
         </button>
+      </div>
+      <!-- Caption picker — hidden until card is shared -->
+      <div id="captionPicker" style="display:none;padding:0 22px 22px;">
+        <div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.35);text-align:center;margin-bottom:10px;">copy a caption for your post</div>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+          <div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;position:relative;">
+            my march wrapped 🌿 love this team @amigocare.aba
+          </div>
+          <div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;position:relative;">
+            when your workplace actually cares about wellness 🌱 @amigocare.aba
+          </div>
+          <div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;position:relative;">
+            not your average healthcare job 🌿 @amigocare.aba
+          </div>
+        </div>
       </div>
     </div>`;
 
   document.body.appendChild(modal);
   document.getElementById('crewModalClose').onclick = () => modal.remove();
   modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
-  document.getElementById('shareCardBtn').onclick = function(){ generateShareCard(idx); };
+
+  // Share button — download card then reveal caption picker
+  document.getElementById('shareCardBtn').onclick = function(){
+    generateShareCard(idx);
+    var picker = document.getElementById('captionPicker');
+    if(picker) {
+      picker.style.display = 'block';
+      picker.scrollIntoView({behavior:'smooth',block:'nearest'});
+      // Update share button to show "downloaded" state
+      var btn = document.getElementById('shareCardBtn');
+      btn.innerHTML = '✓ Card Saved — Now Post It';
+      btn.style.background = 'rgba(255,255,255,.08)';
+      btn.style.color = '${nc.accent}';
+      btn.style.border = '1px solid ${nc.accent}';
+      btn.style.boxShadow = 'none';
+      btn.style.cursor = 'default';
+    }
+  };
+
+  // Caption copy handlers
+  document.querySelectorAll('.caption-opt').forEach(function(el){
+    el.onclick = function(){
+      var text = el.textContent.trim();
+      navigator.clipboard.writeText(text).then(function(){
+        var orig = el.innerHTML;
+        el.style.borderColor = '${nc.accent}';
+        el.style.background = '${nc.glow}0.10)';
+        el.innerHTML = '<span style="color:${nc.accent};font-weight:700;">✓ copied!</span>';
+        setTimeout(function(){
+          el.innerHTML = orig;
+          el.style.borderColor = 'rgba(255,255,255,.08)';
+          el.style.background = 'rgba(255,255,255,.04)';
+        }, 1500);
+      });
+    };
+  });
 }
 
 // ── SHARE CARD GENERATOR (Canvas — iOS/Gen Z) ────────────────────
@@ -1476,7 +1533,7 @@ function _renderShareCard(idx, logoEl){
   ctx.fillStyle = nc.accent;
   ctx.font = '600 26px Cabin, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('WE\'RE HIRING RBTs — COME GROW WITH US 🌱', cx, H - 160);
+  ctx.fillText('when your workplace actually cares about wellness 🌱', cx, H - 160);
 
   // @handle below CTA
   ctx.fillStyle = 'rgba(255,255,255,0.6)';

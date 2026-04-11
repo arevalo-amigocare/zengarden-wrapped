@@ -1060,14 +1060,6 @@ function openCrewProfile(idx) {
       </div>`;
   }
 
-  // Points hero
-  contentHTML += `
-    <div style="text-align:center;padding:8px 22px 2px;">
-      <div style="font-size:12px;color:${labelColor};">you earned</div>
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:80px;color:${nc.accent};line-height:1;text-shadow:0 0 30px ${nc.glow}0.3);">${r.pts}</div>
-      <div style="font-size:11px;letter-spacing:4px;opacity:.2;font-weight:700;">P O I N T S</div>
-    </div>`;
-
   // Top word — simplified
   const isTop10 = rank <= 10;
   if(topWord){
@@ -1098,20 +1090,12 @@ function openCrewProfile(idx) {
     contentHTML += `</div>`;
   }
 
-  // Identity pill — top 10: award OR style (one pill); others: style + award
-  if(isTop10){
-    const pillText = award ? (award[0] + '  ' + award[1]) : stLabel;
-    contentHTML += `
+  // Identity pill — one pill: award if they have one, otherwise style
+  const pillText = award ? (award[0] + '  ' + award[1]) : stLabel;
+  contentHTML += `
     <div style="padding:10px 22px 2px;">
       <div style="padding:10px;border-radius:22px;border:2px solid ${nc.accent};background:${nc.glow}0.10);text-align:center;font-size:15px;font-weight:700;color:${nc.accent};">${pillText}</div>
     </div>`;
-  } else {
-    contentHTML += `
-    <div style="padding:10px 22px 2px;display:flex;flex-direction:column;gap:8px;">
-      <div style="padding:10px;border-radius:22px;border:2px solid ${nc.accent};background:${nc.glow}0.06);text-align:center;font-size:15px;font-weight:700;color:${nc.accent};">${stLabel}</div>
-      ${award ? `<div style="padding:10px;border-radius:22px;border:1px solid ${nc.glow}0.15);background:${nc.glow}0.06);text-align:center;font-size:15px;color:#fff;">${award[0]}  ${award[1]}</div>` : ''}
-    </div>`;
-  }
 
   // Detail stat pills — 3 separate neon cards
   const statPills = [];
@@ -1124,7 +1108,7 @@ function openCrewProfile(idx) {
   if(statPills.length > 0){
     contentHTML += `<div style="display:flex;justify-content:center;gap:8px;padding:10px 16px 2px;">`;
     statPills.forEach(function(sp){
-      contentHTML += `<div style="flex:1;text-align:center;padding:10px 4px;border-radius:14px;background:${nc.glow}0.08);border:1px solid ${nc.glow}0.18);">
+      contentHTML += `<div style="flex:1;text-align:center;padding:10px 4px;border-radius:14px;background:${nc.glow}0.08);border:2px solid ${nc.accent};">
         <div style="font-size:18px;">${sp.em}</div>
         <div style="font-size:14px;font-weight:700;color:#fff;margin-top:2px;">${sp.val}</div>
         <div style="font-size:8px;font-weight:700;letter-spacing:.08em;color:rgba(255,255,255,.4);margin-top:2px;">${sp.lbl}</div>
@@ -1152,7 +1136,6 @@ function openCrewProfile(idx) {
       <div style="text-align:center;padding:24px 22px 6px;">
         <div style="font-size:52px;margin-bottom:4px;">${em}</div>
         <div style="font-family:'Bebas Neue',sans-serif;font-size:52px;line-height:.9;color:#fff;">${name.toUpperCase()}</div>
-        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:${nc.accent};opacity:.5;margin-top:4px;">${r.role}</div>
       </div>
       ${contentHTML}
       <!-- Share button -->
@@ -1337,27 +1320,6 @@ function _renderShareCard(idx, logoEl){
   // ── Points hero — MASSIVE number with glow
   accentDash(curY);
   curY += 22;
-  ctx.fillStyle = nc.accent + 'BB';
-  ctx.font = '600 20px Cabin, sans-serif'; ctx.textAlign = 'center';
-  ctx.fillText('you earned', cx, curY);
-
-  var ptGlow = ctx.createRadialGradient(cx, curY + 80, 0, cx, curY + 80, 240);
-  ptGlow.addColorStop(0, nc.glow + '0.12)');
-  ptGlow.addColorStop(1, 'transparent');
-  ctx.fillStyle = ptGlow;
-  ctx.fillRect(cx - 240, curY + 10, 480, 140);
-
-  ctx.fillStyle = nc.accent;
-  ctx.font = '140px "Bebas Neue", sans-serif';
-  ctx.save(); ctx.shadowColor = nc.accent; ctx.shadowBlur = 30;
-  ctx.fillText(r.pts.toString(), cx, curY + 120);
-  ctx.restore();
-
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = '700 20px Cabin, sans-serif';
-  ctx.fillText('P O I N T S', cx, curY + 148);
-  curY += 185;
-
   // ── Top word — simplified: just the word
   var isTop10 = rank <= 10;
   if(topWord){
@@ -1410,43 +1372,20 @@ function _renderShareCard(idx, logoEl){
     curY += 72;
   }
 
-  // ── Identity pill — top 10: award OR style (one pill); others: style + optional award
+  // ── Identity pill — one pill: award if they have one, otherwise style
   curY += 18;
   accentDash(curY);
   curY += 18;
   var pillW = 620, pillH = 58, pillR = 29;
-
-  if(isTop10){
-    // One pill — award takes priority, neon border + neon bg
-    var pillLabel = award ? (award[0] + '  ' + award[1]) : stLabel;
-    ctx.fillStyle = nc.glow + '0.10)';
-    roundRect(ctx, cx - pillW/2, curY, pillW, pillH, pillR); ctx.fill();
-    ctx.strokeStyle = nc.accent; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = nc.accent;
-    ctx.font = award ? '700 28px Cabin, sans-serif' : '700 26px Cabin, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(pillLabel, cx, curY + 38);
-    curY += pillH + 12;
-  } else {
-    // Style pill
-    ctx.fillStyle = nc.glow + '0.06)';
-    roundRect(ctx, cx - pillW/2, curY, pillW, pillH, pillR); ctx.fill();
-    ctx.strokeStyle = nc.accent; ctx.lineWidth = 2; ctx.stroke();
-    ctx.fillStyle = nc.accent;
-    ctx.font = '700 26px Cabin, sans-serif'; ctx.textAlign = 'center';
-    ctx.fillText(stLabel, cx, curY + 38);
-    curY += pillH + 12;
-    // Award pill (if exists)
-    if(award){
-      ctx.fillStyle = nc.glow + '0.06)';
-      roundRect(ctx, cx - pillW/2, curY, pillW, pillH, pillR); ctx.fill();
-      ctx.strokeStyle = nc.glow + '0.15)'; ctx.lineWidth = 1; ctx.stroke();
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = '30px serif'; ctx.textAlign = 'center';
-      ctx.fillText(award[0] + '  ' + award[1], cx, curY + 39);
-      curY += pillH + 12;
-    }
-  }
+  var pillLabel = award ? (award[0] + '  ' + award[1]) : stLabel;
+  ctx.fillStyle = nc.glow + '0.10)';
+  roundRect(ctx, cx - pillW/2, curY, pillW, pillH, pillR); ctx.fill();
+  ctx.strokeStyle = nc.accent; ctx.lineWidth = 2; ctx.stroke();
+  ctx.fillStyle = nc.accent;
+  ctx.font = award ? '700 28px Cabin, sans-serif' : '700 26px Cabin, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(pillLabel, cx, curY + 38);
+  curY += pillH + 12;
 
   // ── Detail stats — 3 separate neon pills
   var statItems = [];
@@ -1471,7 +1410,7 @@ function _renderShareCard(idx, logoEl){
       // Neon-tinted bg
       ctx.fillStyle = nc.glow + '0.08)';
       roundRect(ctx, spX, curY, spW, spH, spR); ctx.fill();
-      ctx.strokeStyle = nc.glow + '0.18)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.strokeStyle = nc.accent; ctx.lineWidth = 2; ctx.stroke();
 
       // Emoji icon
       ctx.fillStyle = '#FFFFFF';

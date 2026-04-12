@@ -1054,7 +1054,7 @@ function openCrewProfile(idx) {
   const nc = neonMap[r.role] || neonMap.RBT;
 
   // ── Theme-aware colors based on _cardBg ─────────────────
-  const isLightModal = (window._cardBg === 'light');
+  const isLightModal = (window._cardBg === 'light' || window._cardBg === 'lavender');
   const lightBlue = '#2E7DD4';
   const mc = isLightModal ? {
     accent: lightBlue, glow: 'rgba(46,125,212,',
@@ -1076,10 +1076,20 @@ function openCrewProfile(idx) {
     forest:  'linear-gradient(180deg,#04342C 0%,#062B1F 40%,#031A14 100%)',
     slate:   'linear-gradient(180deg,#1C1C2E 0%,#2A2A3D 40%,#16162A 100%)',
     warm:    'linear-gradient(180deg,#1A1008 0%,#2B1A0A 40%,#120C04 100%)',
+    purple:  'linear-gradient(180deg,#2A1B3D 0%,#3D2B52 30%,#4A3060 50%,#3D2B52 70%,#2A1B3D 100%)',
+    lavender:'linear-gradient(180deg,#E8E3F3 0%,#DDD6EC 35%,#D5CEE8 50%,#DDD6EC 70%,#E8E3F3 100%)',
     light:   'linear-gradient(180deg,#F7F4EE 0%,#EDE9DF 40%,#E2DDD3 100%)'
   };
   let cardBgCSS;
-  if(isLightModal){
+  if(currentBg === 'lavender'){
+    cardBgCSS = 'radial-gradient(circle at 20% 14%, rgba(167,139,250,0.15) 0%, transparent 40%),'
+      + 'radial-gradient(circle at 78% 10%, rgba(236,72,153,0.10) 0%, transparent 35%),'
+      + 'radial-gradient(circle at 50% 38%, rgba(139,92,246,0.12) 0%, transparent 45%),'
+      + 'radial-gradient(circle at 15% 58%, rgba(244,114,182,0.08) 0%, transparent 35%),'
+      + 'radial-gradient(circle at 85% 50%, rgba(192,132,252,0.10) 0%, transparent 35%),'
+      + 'radial-gradient(circle at 50% 78%, rgba(129,140,248,0.10) 0%, transparent 40%),'
+      + bgLinear.lavender;
+  } else if(isLightModal){
     cardBgCSS = 'radial-gradient(circle at 19% 16%, rgba(99,102,241,0.12) 0%, transparent 40%),'
       + 'radial-gradient(circle at 81% 10%, rgba(0,229,255,0.10) 0%, transparent 35%),'
       + 'radial-gradient(circle at 50% 37%, rgba(29,158,117,0.10) 0%, transparent 45%),'
@@ -1087,6 +1097,15 @@ function openCrewProfile(idx) {
       + 'radial-gradient(circle at 83% 52%, rgba(239,159,39,0.08) 0%, transparent 35%),'
       + 'radial-gradient(circle at 50% 78%, rgba(46,125,212,0.10) 0%, transparent 40%),'
       + bgLinear.light;
+  } else if(currentBg === 'purple'){
+    // Soft holographic orbs on light purple-pink
+    cardBgCSS = 'radial-gradient(circle at 20% 12%, rgba(196,148,255,0.20) 0%, transparent 45%),'
+      + 'radial-gradient(circle at 80% 8%, rgba(255,182,217,0.18) 0%, transparent 40%),'
+      + 'radial-gradient(circle at 50% 35%, rgba(167,139,250,0.15) 0%, transparent 45%),'
+      + 'radial-gradient(circle at 12% 55%, rgba(255,155,200,0.10) 0%, transparent 35%),'
+      + 'radial-gradient(circle at 88% 50%, rgba(192,132,252,0.12) 0%, transparent 40%),'
+      + 'radial-gradient(circle at 45% 75%, rgba(216,180,254,0.10) 0%, transparent 35%),'
+      + bgLinear.purple;
   } else {
     cardBgCSS = 'radial-gradient(circle at 50% 22%, ' + nc.glow + '0.20) 0%, transparent 50%),'
       + 'radial-gradient(circle at 15% 47%, ' + nc.glow + '0.06) 0%, transparent 40%),'
@@ -1196,6 +1215,8 @@ function openCrewProfile(idx) {
     {bg:'forest',grad:'linear-gradient(135deg,#04342C,#062B1F)'},
     {bg:'slate',grad:'linear-gradient(135deg,#1C1C2E,#2A2A3D)'},
     {bg:'warm',grad:'linear-gradient(135deg,#1A1008,#2B1A0A)'},
+    {bg:'purple',grad:'linear-gradient(135deg,#2A1B3D,#4A3060)'},
+    {bg:'lavender',grad:'linear-gradient(135deg,#E8E3F3,#D5CEE8)'},
     {bg:'light',grad:'linear-gradient(135deg,#F7F4EE,#EDE9DF)'}
   ];
   let swatchHTML = '';
@@ -1232,7 +1253,7 @@ function openCrewProfile(idx) {
       // Footer — divider + tagline + logo + IG-safe bottom padding (~280px at 1920)
       + '<div style="text-align:center;padding:12px 24px 96px;">'
         + '<div style="width:32px;height:2px;background:' + mc.accent + ';border-radius:1px;margin:0 auto 16px;' + (isLightModal ? '' : 'box-shadow:0 0 12px ' + mc.accent + ';') + '"></div>'
-        + '<div style="font-size:16px;font-weight:700;color:#4ade80;font-family:Cabin,sans-serif;line-height:1.4;letter-spacing:.01em;margin-bottom:16px;' + (isLightModal ? '' : 'text-shadow:0 0 20px rgba(74,222,128,0.5),0 0 40px rgba(74,222,128,0.25);') + '">A workplace that actually<br>sees you 🌱</div>'
+        + '<div style="font-size:13px;font-weight:700;color:' + (isLightModal ? '#2E7DD4' : '#4ade80') + ';font-family:Cabin,sans-serif;line-height:1.4;letter-spacing:.02em;margin-bottom:16px;white-space:nowrap;' + (isLightModal ? '' : 'text-shadow:0 0 20px rgba(74,222,128,0.5),0 0 40px rgba(74,222,128,0.25);') + '">A workplace that actually sees you 🌱</div>'
         + (cardLogoSrc ? '<img src="' + cardLogoSrc + '" style="height:49px;" crossorigin="anonymous" />' : '')
       + '</div>'
 

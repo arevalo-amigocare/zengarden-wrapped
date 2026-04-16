@@ -468,7 +468,7 @@ def main():
         return " ".join(w.capitalize() if w[0].islower() else w for w in name.split())
 
     summary_lines = [
-        f"📊 *Zen Garden Weekly Points — {week_label}*",
+        f"*Zen Garden Weekly Points — {week_label}*",
         "",
     ]
     medals = ["🥇", "🥈", "🥉"]

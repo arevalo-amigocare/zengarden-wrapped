@@ -464,16 +464,19 @@ def main():
     total_pts = sum(s["points"] for s in scores)
 
     # ── Generate Slack-ready summary ──────────────────────────────
+    def capitalize_name(name):
+        return " ".join(w.capitalize() if w[0].islower() else w for w in name.split())
+
     summary_lines = [
-        f"🌿 Zen Garden Weekly Points — {week_label}",
+        f"📊 *Zen Garden Weekly Points — {week_label}*",
         "",
     ]
     medals = ["🥇", "🥈", "🥉"]
     for i, s in enumerate(scores[:3]):
         medal = medals[i] if i < 3 else f"{i+1}."
-        summary_lines.append(f"{medal} {s['name']} — {s['points']} pts")
+        summary_lines.append(f"{medal} {capitalize_name(s['name'])} — {s['points']} pts")
     summary_lines.append("")
-    summary_lines.append(f"{len(scores)} people earned points · {total_pts} total pts")
+    summary_lines.append(f"{len(scores)} people · {total_pts} total pts")
     summary_text = "\n".join(summary_lines)
 
     print(f"\n{'─' * 50}")

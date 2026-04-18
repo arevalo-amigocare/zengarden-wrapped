@@ -160,6 +160,17 @@ body::before {
     <div class="empty">Loading status...</div>
   </div>
 
+  <!-- NEXT REMINDER -->
+  <div class="status-card" id="nextReminder" style="margin-bottom:16px;">
+    <div class="status-header" style="margin-bottom:8px;">
+      <div class="status-dot" style="background:var(--blue);"></div>
+      <div class="status-title">Next Reminder</div>
+    </div>
+    <div class="detail-row"><span class="detail-key">Weekly scoreboard</span><span class="detail-val" id="nextWeekly">—</span></div>
+    <div class="detail-row"><span class="detail-key">Monthly Wrapped</span><span class="detail-val" id="nextMonthly">—</span></div>
+    <div class="detail-row"><span class="detail-key">Channel</span><span class="detail-val">#zengarden</span></div>
+  </div>
+
   <!-- GARDY MESSAGING -->
   <div class="msg-section" id="msgSection" style="display:none;">
     <div class="msg-section-title">Send as Gardy</div>
@@ -283,6 +294,27 @@ fetch('run_status.json')
     document.getElementById('content').innerHTML = '<div class="empty">No run data found.<br><small>Run the extraction script to generate status.</small></div>';
     document.getElementById('links').style.display = '';
   });
+
+// ── NEXT REMINDER ────────────────────────────────────────────────
+(function() {
+  var now = new Date();
+
+  // Next Sunday at 12pm ET (16:00 UTC during EDT)
+  var nextSunday = new Date(now);
+  var daysUntilSunday = (7 - now.getDay()) % 7;
+  if (daysUntilSunday === 0 && now.getUTCHours() >= 16) daysUntilSunday = 7;
+  nextSunday.setDate(now.getDate() + daysUntilSunday);
+  nextSunday.setHours(12, 0, 0, 0);
+
+  var weeklyOpts = { weekday: 'long', month: 'short', day: 'numeric' };
+  var weeklyStr = nextSunday.toLocaleDateString('en-US', weeklyOpts) + ' · 12pm ET';
+  document.getElementById('nextWeekly').textContent = weeklyStr;
+
+  // Last day of current month (Monthly Wrapped placeholder)
+  var lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+  var monthlyStr = lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · manual';
+  document.getElementById('nextMonthly').textContent = monthlyStr;
+})();
 
 // ── GARDY MESSAGING ──────────────────────────────────────────────
 (function() {

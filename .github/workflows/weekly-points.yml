@@ -2,7 +2,10 @@ name: Weekly Points Extraction
 
 on:
   schedule:
-    - cron: '0 14 * * 0'  # Every Sunday at 9am ET (14:00 UTC)
+    # Every Sunday at 12pm ET
+    # DST note: Change to '0 17 * * 0' after Nov 1, 2026 (when EST starts).
+    #           Change back to '0 16 * * 0' after Mar 8, 2027 (when EDT resumes).
+    - cron: '0 16 * * 0'  # 16:00 UTC = 12pm EDT (Mar–Nov) / 11am EST (Nov–Mar)
   workflow_dispatch:
     inputs:
       week_override:

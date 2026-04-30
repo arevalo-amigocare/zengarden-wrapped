@@ -65,3 +65,22 @@ jobs:
             git commit -m "Weekly points: ${WEEK_LABEL}"
             git push
           fi
+
+      # ── FAIL ALERT ────────────────────────────────────────────────
+      # Runs ONLY if any previous step failed. Posts to private alerts channel.
+      # Set SLACK_ALERT_WEBHOOK_URL in repo secrets to enable.
+      - name: Post failure alert to Slack
+        if: failure()
+        env:
+          ALERT_URL: ${{ secrets.SLACK_ALERT_WEBHOOK_URL }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          if [ -z "$ALERT_URL" ]; then
+            echo "::warning::SLACK_ALERT_WEBHOOK_URL not set — skipping failure notification"
+            exit 0
+          fi
+          MSG="⚠️ *Zen Garden weekly run failed*\\n\\nWorkflow: \`${{ github.workflow }}\`\\nTriggered by: \`${{ github.event_name }}\`\\nDate: $(date -u '+%Y-%m-%d %H:%M UTC')\\n\\n<${RUN_URL}|View the failed run on GitHub>"
+          curl -s -X POST -H 'Content-Type: application/json' \
+            --data "{\"text\":\"${MSG}\"}" \
+            "$ALERT_URL" > /dev/null
+          echo "Failure alert posted"

@@ -408,10 +408,35 @@ def main():
     bilingual_posts = 0                   # posts mixing en+es
     food_keywords = ['cook', 'meal', 'eat', 'breakfast', 'lunch', 'dinner', 'food', 'recipe', 'salad', 'protein']
     pet_keywords = ['dog', 'cat', 'pet', 'puppy', 'kitten', 'doggo']
+    weather_keywords = ['sunny', 'rain', 'snow', 'cold', 'hot', 'warm', 'cloudy', 'storm', 'beach', 'spring', 'summer', 'fall', 'winter', 'sun ', 'weather']
+    specific_foods = ['pasta', 'pizza', 'salad', 'smoothie', 'coffee', 'cake', 'burger', 'taco', 'sushi', 'bread', 'cookies', 'soup', 'curry', 'ramen', 'sandwich']
     food_posts = 0
     pet_posts = 0
+    weather_posts = 0
+    food_specifics = Counter()            # specific food name -> count
     top_post = {"reactions": 0, "ts": None, "user": None, "text": None}  # post with most reactions
     SPANISH_MARKERS = {'que', 'pero', 'como', 'esta', 'muy', 'porque', 'gracias', 'amor', 'hoy', 'dia', 'noche'}
+
+    # ── New trackers for novel Spotify-style data ────────────────
+    total_chars = 0                       # total characters typed (for reading/typing time)
+    total_words_chan = 0                  # total words across all messages
+    total_messages = 0                    # total messages processed
+    question_marks_total = 0              # total ? count
+    caps_messages = 0                     # messages with >50% caps (and >=10 chars)
+    emoji_only_posts = 0                  # posts containing only emojis (no real words)
+    convo_replies_per_thread = []         # list of reply_counts (>0) for averaging
+    posts_with_reactions = 0              # posts that received any reactions
+    first_reply_lags = []                 # seconds between parent post and first reply
+    posts_per_minute = []                 # all post timestamps for power-hour calc
+    first_post_per_day = {}               # date -> (uid, ts) for earliest message
+    last_post_per_day = {}                # date -> (uid, ts) for latest message
+    sentiment_by_week = defaultdict(list) # week_idx (0..3) -> list of sentiment scores
+    posts_by_week = Counter()             # week_idx -> post count
+
+    # Helper: which week (0..3) does a date fall into?
+    def week_idx_for_date(dt):
+        days_in = (dt.date() - start_date.date()).days
+        return max(0, min(3, days_in // 7))
 
     print("📨 Fetching messages...")
     messages = get_all_messages(bot_client, channel_id, oldest, latest)
@@ -467,14 +492,51 @@ def main():
             food_posts += 1
         if any(k in text_lower for k in pet_keywords):
             pet_posts += 1
+        if any(k in text_lower for k in weather_keywords):
+            weather_posts += 1
+        for sf in specific_foods:
+            if sf in text_lower:
+                food_specifics[sf] += 1
         words_set = set(extract_words(text))
         if words_set & SPANISH_MARKERS:
             bilingual_posts += 1
+
+        # New trackers — text/typing patterns
+        clean_text = re.sub(r'<[@#!][^>]+>', '', text)  # strip mentions
+        clean_text = re.sub(r'https?://\S+', '', clean_text)  # strip URLs
+        clean_text = re.sub(r':[a-z0-9_+\-]+:', '', clean_text)  # strip slack emoji
+        chars_in_msg = len(clean_text)
+        words_in_msg = len(re.findall(r'\b[a-zA-Z]+\b', clean_text))
+        total_chars += chars_in_msg
+        total_words_chan += words_in_msg
+        total_messages += 1
+        question_marks_total += clean_text.count('?')
+        # Caps detection: ≥10 letters, ≥60% are caps
+        letters = [c for c in clean_text if c.isalpha()]
+        if len(letters) >= 10:
+            caps_ratio = sum(1 for c in letters if c.isupper()) / len(letters)
+            if caps_ratio >= 0.6:
+                caps_messages += 1
+        # Emoji-only posts (no actual words but has emoji or slack emoji shortcode)
+        if words_in_msg == 0 and (extract_emojis(text) or re.search(r':[a-z0-9_+\-]+:', text)):
+            emoji_only_posts += 1
+        # First/last poster of each day
+        date_str = dt.strftime("%Y-%m-%d")
+        if date_str not in first_post_per_day or ts < first_post_per_day[date_str][1]:
+            first_post_per_day[date_str] = (users[uid], ts)
+        if date_str not in last_post_per_day or ts > last_post_per_day[date_str][1]:
+            last_post_per_day[date_str] = (users[uid], ts)
+        # Power hour collection
+        posts_per_minute.append(ts)
+        # Per-week trackers
+        widx = week_idx_for_date(dt)
+        posts_by_week[widx] += 1
 
         # Sentiment + dimension
         s = sentiment_score(text)
         sentiment_sum[uid] += s
         sentiment_n[uid] += 1
+        sentiment_by_week[widx].append(s)
         dim, _ = classify_post(text)
         if dim != "none":
             dim_counts[uid][dim] += 1
@@ -489,6 +551,8 @@ def main():
                 if ruid in users:
                     reactions_given[ruid][reaction["name"]] += 1
         max_reactions[uid] = max(max_reactions[uid], post_reaction_total)
+        if post_reaction_total > 0:
+            posts_with_reactions += 1
 
         # Track the single most-reacted post for "Garden Receipts" insights
         if post_reaction_total > top_post["reactions"]:
@@ -503,7 +567,12 @@ def main():
         # Threads
         if msg.get("reply_count", 0) > 0:
             thread_count += 1
+            convo_replies_per_thread.append(msg.get("reply_count", 0))
             replies = get_replies(bot_client, channel_id, msg["ts"], oldest, latest)
+            # Capture first reply lag (in seconds) for reaction-velocity proxy
+            if replies:
+                first_reply_ts = float(replies[0].get("ts", ts))
+                first_reply_lags.append(first_reply_ts - ts)
             participants = {uid}
             for reply in replies:
                 ruid = reply.get("user")
@@ -513,6 +582,14 @@ def main():
                 reply_count[ruid] += 1
                 message_count[ruid] += 1
                 participants.add(ruid)
+
+                # Track chars in replies too
+                rclean = re.sub(r'<[@#!][^>]+>', '', rtext)
+                rclean = re.sub(r'https?://\S+', '', rclean)
+                rclean = re.sub(r':[a-z0-9_+\-]+:', '', rclean)
+                total_chars += len(rclean)
+                total_words_chan += len(re.findall(r'\b[a-zA-Z]+\b', rclean))
+                total_messages += 1
 
                 for w in extract_words(rtext):
                     word_counts[ruid][w] += 1
@@ -849,20 +926,114 @@ def main():
     # Cross-role engagement (very rough approximation: BCBA-RBT thread pairs)
     role_by_name = {p["name"]: p["role"] for p in all_active}
 
+    # ── NEW: Communication patterns ────────────────────────────────
+    avg_post_length_words = round(total_words_chan / max(total_messages, 1), 1)
+    avg_post_length_chars = round(total_chars / max(total_messages, 1))
+
+    # Reading time (avg reader: 250 wpm)
+    reading_time_min = round(total_words_chan / 250)
+
+    # Typing time (avg typist: 40 wpm)
+    typing_time_min = round(total_words_chan / 40)
+
+    # Conversation depth
+    avg_thread_depth = round(sum(convo_replies_per_thread) / max(len(convo_replies_per_thread), 1), 1) if convo_replies_per_thread else 0
+
+    # Reaction reach (% of posts that got reactions)
+    reaction_reach_pct = round(posts_with_reactions / max(total_posts_overall, 1) * 100)
+
+    # Reaction velocity (avg minutes to first reply, as proxy)
+    if first_reply_lags:
+        avg_first_reply_min = round(sum(first_reply_lags) / len(first_reply_lags) / 60)
+    else:
+        avg_first_reply_min = 0
+
+    # ── Power hour: 60-min sliding window ──────────────────────────
+    power_hour_str = ""
+    power_hour_count = 0
+    if posts_per_minute:
+        timestamps = sorted(posts_per_minute)
+        max_count = 0
+        max_start = timestamps[0]
+        # 1-hour window scan
+        j = 0
+        for i in range(len(timestamps)):
+            while j < len(timestamps) and timestamps[j] - timestamps[i] <= 3600:
+                j += 1
+            count = j - i
+            if count > max_count:
+                max_count = count
+                max_start = timestamps[i]
+        if max_count >= 3:
+            power_dt = datetime.fromtimestamp(max_start)
+            power_hour_str = power_dt.strftime("%B %-d at %-I:%M %p")
+            power_hour_count = max_count
+
+    # ── Mood arc (sentiment per week) ──────────────────────────────
+    mood_arc = []
+    for w in range(4):
+        scores = sentiment_by_week.get(w, [])
+        if scores:
+            mood_arc.append(round(sum(scores) / len(scores), 2))
+        else:
+            mood_arc.append(0.0)
+
+    # ── Audio aura (sentiment + top dimension as a "vibe" label) ───
+    aura_label = ""
+    avg_sent_for_aura = sum(mood_arc) / max(len([x for x in mood_arc if x != 0]), 1) if any(mood_arc) else 0
+    top_global_dim = global_dims.most_common(1)[0][0] if global_dims else "Social"
+    DIM_TO_AURA = {
+        "Social": "Connected", "Physical": "Energized", "Emotional": "Grounded",
+        "Intellectual": "Curious", "Spiritual": "Centered", "Occupational": "Focused",
+        "Environmental": "Present", "Financial": "Steady",
+    }
+    sent_aura = "Cozy" if avg_sent_for_aura > 0.3 else ("Warm" if avg_sent_for_aura > 0 else "Real")
+    aura_label = f"{sent_aura} + {DIM_TO_AURA.get(top_global_dim, 'Connected')}"
+
+    # ── Color palette (top 5 reaction emojis as display strip) ─────
+    palette_top5 = []
+    for name, _ in global_emoji_counter.most_common(5):
+        palette_top5.append(reaction_to_display(name))
+
+    # ── First/last poster ranking ──────────────────────────────────
+    first_poster_counts = Counter(v[0] for v in first_post_per_day.values())
+    last_poster_counts = Counter(v[0] for v in last_post_per_day.values())
+    top_opener = first_poster_counts.most_common(1)[0] if first_poster_counts else None
+    top_closer = last_poster_counts.most_common(1)[0] if last_poster_counts else None
+
+    # ── Cross-role thread engagement count ─────────────────────────
+    cross_role_count = 0
+    name_to_role = {p["name"]: p["role"] for p in all_active}
+    uid_to_role = {uid: name_to_role.get(name, "RBT") for uid, name in users.items()}
+    for u1, partners in thread_pairs.items():
+        for u2, count in partners.items():
+            if uid_to_role.get(u1) != uid_to_role.get(u2) and uid_to_role.get(u1) and uid_to_role.get(u2):
+                cross_role_count += count
+    cross_role_count = cross_role_count // 2  # each pair counted twice
+
+    # Top food specifics
+    top_food_specifics = food_specifics.most_common(3)
+
     # Theme generators ────────────────────────────────────────────
-    def theme_receipts():
+    # MOMENTS — specific timestamps + collective peaks (no person spotlight)
+    def theme_moments():
         out = []
         if top_post.get("text"):
-            poster_first = _format_first_name(top_post["user"])
             out.append({
-                "emoji": "📸",
+                "emoji": "💥",
                 "color": "green",
-                "text": f"<b>{top_post['datetime']}</b> — {poster_first}'s post got <b>{top_post['reactions']} reactions</b>. The garden's loudest moment.",
+                "text": f"<b>{top_post['datetime']}</b> — one post got <b>{top_post['reactions']} reactions</b>. The garden's loudest moment.",
+            })
+        if power_hour_str and power_hour_count >= 5:
+            out.append({
+                "emoji": "⚡️",
+                "color": "amber",
+                "text": f"<b>The Power Hour</b> — {power_hour_str}. <b>{power_hour_count} messages</b> in 60 minutes.",
             })
         if busiest_day_str and busiest_day_count >= 5:
             out.append({
                 "emoji": "🔥",
-                "color": "amber",
+                "color": "coral",
                 "text": f"On <b>{busiest_day_str}</b>, the channel went OFF. <b>{busiest_day_count} messages</b> in one day.",
             })
         if busiest_dow_name:
@@ -871,14 +1042,9 @@ def main():
                 "color": "blue",
                 "text": f"<b>{busiest_dow_name}</b> is your busiest day — <b>{busiest_dow_pct}%</b> of all activity. And you knew it.",
             })
-        if top_photographer and top_photographer["photos_shared"] >= 5:
-            out.append({
-                "emoji": "🌅",
-                "color": "coral",
-                "text": f"<b>{_format_first_name(top_photographer['name'])}</b> dropped <b>{top_photographer['photos_shared']} photos</b> this month. Almost one a day.",
-            })
         return out[:4]
 
+    # NUMBERS — pure collective stats
     def theme_numbers():
         out = []
         out.append({
@@ -891,18 +1057,21 @@ def main():
             "color": "blue",
             "text": f"Your peak hour: <b>{_hour_to_label(peak_hour)}</b> sharp. The channel hits its stride.",
         })
-        out.append({
-            "emoji": "❤️",
-            "color": "coral",
-            "text": f"<b>{total_reactions:,} reactions</b> shared this month. That's one every <b>{round(30 * 24 * 60 / max(total_reactions, 1))} minutes</b>, all month.",
-        })
+        if total_reactions > 0:
+            mins_per_reaction = round(30 * 24 * 60 / total_reactions)
+            out.append({
+                "emoji": "❤️",
+                "color": "coral",
+                "text": f"<b>{total_reactions:,} reactions</b> this month. One every <b>{mins_per_reaction} minutes</b>, all month long.",
+            })
         out.append({
             "emoji": "✍️",
             "color": "amber",
-            "text": f"Combined, you typed <b>{total_words:,} words</b>. A novella of love.",
+            "text": f"Combined, you typed <b>{total_words_chan:,} words</b>. A novella of love.",
         })
         return out[:4]
 
+    # ONLY_YOU — tribal identity (collective, no person spotlight)
     def theme_only_you():
         out = []
         if top_word_data[1] >= 10:
@@ -921,7 +1090,7 @@ def main():
             out.append({
                 "emoji": "🔥",
                 "color": "coral",
-                "text": f"<b>{streak_4_count} of you</b> showed up every single week. No fall-off, no exception. That's not a habit — that's a culture.",
+                "text": f"<b>{streak_4_count} of you</b> showed up every single week. No fall-off, no exception. That's a culture.",
             })
         if active >= 30:
             out.append({
@@ -931,6 +1100,7 @@ def main():
             })
         return out[:4]
 
+    # PLOT TWISTS — surprises (no person spotlight; behavioral patterns)
     def theme_plot_twists():
         out = []
         if weekend_pct >= 15:
@@ -945,57 +1115,152 @@ def main():
                 "color": "blue",
                 "text": f"Plot twist: <b>{len(late_night_posters)} of you</b> only post past 10pm. The night shift owns this channel.",
             })
-        if top_improver and (top_improver["wk4"] - top_improver["wk1"]) >= 10:
-            delta = top_improver["wk4"] - top_improver["wk1"]
+        if early_bird_posters and len(early_bird_posters) >= 2:
             out.append({
-                "emoji": "🚀",
+                "emoji": "🐦",
                 "color": "green",
-                "text": f"Plot twist: <b>{_format_first_name(top_improver['name'])}</b> went from <b>{top_improver['wk1']} pts</b> in week 1 to <b>{top_improver['wk4']} pts</b> in week 4. The comeback of the month.",
+                "text": f"Plot twist: <b>{len(early_bird_posters)} of you</b> post before 7am. The garden's already alive at sunrise.",
             })
-        if early_bird_posters:
-            ebs = [_format_first_name(users[u]) for u in early_bird_posters if u in users][:2]
-            if ebs:
-                out.append({
-                    "emoji": "🐦",
-                    "color": "coral",
-                    "text": f"Plot twist: <b>{' and '.join(ebs)}</b> post before 7am. They start the garden's day.",
-                })
+        if cross_role_count >= 50:
+            out.append({
+                "emoji": "🪢",
+                "color": "coral",
+                "text": f"Plot twist: BCBAs, RBTs, and Admin replied to each other <b>{cross_role_count:,} times</b>. No walls in here.",
+            })
         return out[:4]
 
-    def theme_officials():
+    # PATTERNS — communication style + rhythm (NEW)
+    def theme_patterns():
         out = []
-        if top_photographer and top_photographer["photos_shared"] > 0:
+        if avg_post_length_words >= 1:
             out.append({
-                "emoji": "📸",
-                "color": "amber",
-                "text": f"<b>The Garden's Official Photographer:</b> {_capitalize_first(top_photographer['name'])} ({top_photographer['photos_shared']} photos)",
+                "emoji": "📝",
+                "color": "blue",
+                "text": f"Average post: <b>{avg_post_length_words} words</b>. Short and sweet.",
             })
-        if top_commenter and top_commenter["encourage"] > 0:
-            out.append({
-                "emoji": "🙌",
-                "color": "green",
-                "text": f"<b>The Garden's Hype Machine:</b> {_capitalize_first(top_commenter['name'])} ({top_commenter['encourage']} reactions given)",
-            })
-        if top_connector and top_connector["conn"] > 0:
+        if avg_thread_depth >= 1:
             out.append({
                 "emoji": "🧵",
-                "color": "blue",
-                "text": f"<b>The Garden's Glue:</b> {_capitalize_first(top_connector['name'])} (in {top_connector['conn']} different threads)",
+                "color": "green",
+                "text": f"Average thread: <b>{avg_thread_depth} replies</b>. People stay in conversations.",
             })
-        if all_active and all_active[0]["pts"] > 0:
+        if reaction_reach_pct >= 50:
             out.append({
-                "emoji": "🏆",
+                "emoji": "👋",
+                "color": "amber",
+                "text": f"<b>{reaction_reach_pct}% of posts</b> got at least one reaction. Nobody posts into the void here.",
+            })
+        if avg_first_reply_min >= 1:
+            out.append({
+                "emoji": "⚡️",
                 "color": "coral",
-                "text": f"<b>The Garden's MVP:</b> {_capitalize_first(all_active[0]['name'])} ({all_active[0]['pts']} pts)",
+                "text": f"First reply usually arrives in <b>{avg_first_reply_min} minutes</b>. The garden shows up fast.",
+            })
+        if question_marks_total >= 10:
+            out.append({
+                "emoji": "❓",
+                "color": "blue",
+                "text": f"<b>{question_marks_total} questions</b> asked this month. Curiosity is alive.",
+            })
+        if caps_messages >= 3:
+            out.append({
+                "emoji": "📣",
+                "color": "amber",
+                "text": f"<b>{caps_messages} ALL-CAPS</b> moments. Pure enthusiasm in raw form.",
+            })
+        if emoji_only_posts >= 3:
+            out.append({
+                "emoji": "🎭",
+                "color": "coral",
+                "text": f"<b>{emoji_only_posts} emoji-only posts</b>. Some moments need no words.",
+            })
+        return out[:4]
+
+    # VIBES — mood + themes (NEW)
+    def theme_vibes():
+        out = []
+        if aura_label:
+            month_short = month_label.split()[0]
+            out.append({
+                "emoji": "🌌",
+                "color": "blue",
+                "text": f"<b>The Garden's {month_short} Aura:</b> {aura_label}",
+            })
+        if positive_pct >= 60:
+            out.append({
+                "emoji": "🌞",
+                "color": "amber",
+                "text": f"<b>{positive_pct}% positive vibes</b>. Most teams don't even post.",
+            })
+        if weather_posts >= 8:
+            out.append({
+                "emoji": "🌤️",
+                "color": "blue",
+                "text": f"<b>{weather_posts} weather mentions</b>. The seasons live in the channel.",
+            })
+        if top_food_specifics:
+            food_str = ", ".join([f"<b>{fs[0]}</b>" for fs in top_food_specifics[:3]])
+            out.append({
+                "emoji": "🍽️",
+                "color": "coral",
+                "text": f"Most-mentioned foods: {food_str}. The garden eats well.",
+            })
+        if bilingual_posts >= 5:
+            out.append({
+                "emoji": "🌐",
+                "color": "green",
+                "text": f"<b>{bilingual_posts} posts</b> mixed Spanish and English. Love is bilingual.",
+            })
+        if pet_posts >= 5:
+            out.append({
+                "emoji": "🐾",
+                "color": "amber",
+                "text": f"<b>{pet_posts} pet appearances</b> this month. The garden's a zoo.",
+            })
+        return out[:4]
+
+    # COMPARISONS — Spotify-style "if every X was Y" (NEW)
+    def theme_comparisons():
+        out = []
+        if reading_time_min >= 5:
+            out.append({
+                "emoji": "📖",
+                "color": "blue",
+                "text": f"If you read every message back-to-back, it'd take <b>{reading_time_min} minutes</b>.",
+            })
+        if typing_time_min >= 30:
+            hours = typing_time_min // 60
+            mins = typing_time_min % 60
+            time_str = f"{hours}h {mins}m" if hours else f"{typing_time_min} minutes"
+            out.append({
+                "emoji": "⌨️",
+                "color": "green",
+                "text": f"Combined, you spent <b>{time_str}</b> typing this month. A part-time job of love.",
+            })
+        if total_reactions >= 100:
+            hugs_per_day = round(total_reactions / 30)
+            out.append({
+                "emoji": "🤗",
+                "color": "coral",
+                "text": f"If every reaction was a hug, that's <b>{hugs_per_day} hugs a day</b>, every day.",
+            })
+        if active and total_messages:
+            msgs_per_person = round(total_messages / active)
+            out.append({
+                "emoji": "📬",
+                "color": "amber",
+                "text": f"On average, each active person sent <b>{msgs_per_person} messages</b>. The garden talks.",
             })
         return out[:4]
 
     THEME_FN = {
-        'receipts': theme_receipts,
+        'moments': theme_moments,
         'numbers': theme_numbers,
         'only_you': theme_only_you,
         'plot_twists': theme_plot_twists,
-        'officials': theme_officials,
+        'patterns': theme_patterns,
+        'vibes': theme_vibes,
+        'comparisons': theme_comparisons,
     }
 
     # ── COMBINED INSIGHTS — pick 1 from each of 4 themes ───────────
@@ -1022,15 +1287,19 @@ def main():
     except Exception:
         month_num = 1
 
-    # Rotate combo of categories used each month so insights feel different
-    # Each month uses 4 of the 5 themes, in different combinations
+    # Rotate combo of categories used each month so insights feel different.
+    # Each month uses 4 of the 7 themes in different combinations so the
+    # "Did You Know" panel always has variety even with similar data.
     THEME_COMBOS = [
-        ['receipts', 'numbers', 'plot_twists', 'officials'],   # April (month 4)
-        ['numbers', 'only_you', 'officials', 'plot_twists'],   # May
-        ['receipts', 'plot_twists', 'numbers', 'only_you'],    # June
-        ['officials', 'numbers', 'plot_twists', 'receipts'],   # July
-        ['plot_twists', 'only_you', 'receipts', 'officials'],  # August
-        ['only_you', 'receipts', 'numbers', 'plot_twists'],    # September
+        ['moments', 'numbers', 'plot_twists', 'patterns'],     # April (month 4)
+        ['numbers', 'only_you', 'patterns', 'comparisons'],    # May
+        ['moments', 'vibes', 'numbers', 'only_you'],           # June
+        ['plot_twists', 'comparisons', 'patterns', 'vibes'],   # July
+        ['vibes', 'plot_twists', 'moments', 'numbers'],        # August
+        ['only_you', 'patterns', 'comparisons', 'moments'],    # September
+        ['comparisons', 'vibes', 'numbers', 'only_you'],       # October
+        ['plot_twists', 'patterns', 'moments', 'vibes'],       # November
+        ['numbers', 'comparisons', 'plot_twists', 'patterns'], # December
     ]
     combo = THEME_COMBOS[(month_num - 1) % len(THEME_COMBOS)]
 
@@ -1169,18 +1438,99 @@ def main():
             },
         })
 
-    # 7) Connection story — lots of cross-team threading
+    # 7) Connection story — lots of cross-team threading (capped score so it doesn't always win)
     if all_active and all_active[0].get("conn", 0) >= 100:
         top_conn = all_active[0]
         first = top_conn["name"].split(" ")[0].capitalize()
         stories.append({
-            "score": top_conn["conn"],
+            "score": min(top_conn["conn"], 200),  # capped
             "story": {
                 "eyebrow": "the connector",
                 "heading": f"{first.upper()}<br>HELD IT TOGETHER.",
                 "body": f"Showed up in {top_conn['conn']} different threads. Reacted, replied, started conversations. The kind of person who makes a channel feel like a place.",
                 "highlight_big": "Every team<br>has a glue.",
                 "highlight_body": "It's rarely the person posting the most. It's the person showing up everywhere — quietly making sure no post goes unanswered.",
+            },
+        })
+
+    # 8) MOOD ARC — sentiment shifted across weeks (NEW)
+    if mood_arc and any(mood_arc):
+        non_zero = [m for m in mood_arc if m != 0]
+        if len(non_zero) >= 2:
+            shift = mood_arc[-1] - mood_arc[0]
+            if abs(shift) >= 0.15:
+                if shift > 0:
+                    stories.append({
+                        "score": 280,
+                        "story": {
+                            "eyebrow": "the mood shift",
+                            "heading": "THE GARDEN<br>WARMED UP.",
+                            "body": f"Sentiment started at {mood_arc[0]:.2f} in week 1. Ended at {mood_arc[-1]:.2f} in week 4. Something good happened along the way.",
+                            "highlight_big": "Vibes followed<br>the team.",
+                            "highlight_body": "Mood doesn't shift by accident. It shifts because people kept showing up for each other. Small acts compound into a different feeling by month-end.",
+                        },
+                    })
+                else:
+                    stories.append({
+                        "score": 240,
+                        "story": {
+                            "eyebrow": "the cool down",
+                            "heading": "QUIETER WEEKS,<br>STILL HERE.",
+                            "body": f"The garden's tone softened — from {mood_arc[0]:.2f} in week 1 to {mood_arc[-1]:.2f} in week 4. That's not bad. That's real.",
+                            "highlight_big": "Real life<br>has seasons.",
+                            "highlight_body": "Some weeks are wired. Some are tender. The garden is here for both — and the fact that posts kept coming is what makes this work.",
+                        },
+                    })
+
+    # 9) POWER HOUR — one specific 60-min window stood out (NEW)
+    if power_hour_str and power_hour_count >= 8:
+        stories.append({
+            "score": power_hour_count * 8,
+            "story": {
+                "eyebrow": "the power hour",
+                "heading": "SIXTY MINUTES.<br>ONE WAVE.",
+                "body": f"On {power_hour_str}, the garden caught fire. {power_hour_count} messages in a single hour. Whatever was in the air, it caught.",
+                "highlight_big": "Chemistry<br>can't be planned.",
+                "highlight_body": "When this many people show up at the same time, it's not a coincidence — it's a pulse. Notice it. Repeat it.",
+            },
+        })
+
+    # 10) READING TIME / TYPING TIME — collective effort (NEW)
+    if reading_time_min >= 8 and typing_time_min >= 30:
+        stories.append({
+            "score": 220,
+            "story": {
+                "eyebrow": "the collective output",
+                "heading": "THIS MONTH,<br>YOU WROTE A BOOK.",
+                "body": f"Combined, you typed {total_words_chan:,} words across {total_messages} messages. Reading time: {reading_time_min} minutes. Typing time: about {typing_time_min} minutes — a part-time job of love.",
+                "highlight_big": "Words this team typed:<br>{}.".format(f"{total_words_chan:,}"),
+                "highlight_body": "That's not chatter. That's care, transcribed. Every word is someone showing up — even if it was a quick 'love this!' thrown into a thread.",
+            },
+        })
+
+    # 11) FAST RESPONSE — the team replies fast (NEW)
+    if avg_first_reply_min and avg_first_reply_min <= 30 and len(first_reply_lags) >= 10:
+        stories.append({
+            "score": 200,
+            "story": {
+                "eyebrow": "the response time",
+                "heading": "NOBODY POSTS<br>INTO THE VOID.",
+                "body": f"On average, your first reply arrived in {avg_first_reply_min} minutes. {reaction_reach_pct}% of posts got at least one reaction.",
+                "highlight_big": "Showing up<br>is showing up fast.",
+                "highlight_body": "It's easy to like a post. It's harder to reply within the hour. The garden does both. That's how a channel becomes a real conversation.",
+            },
+        })
+
+    # 12) WEATHER / SEASONAL — channel reflects the month (NEW)
+    if weather_posts >= 10:
+        stories.append({
+            "score": weather_posts * 12,
+            "story": {
+                "eyebrow": "the season",
+                "heading": "THE CHANNEL<br>FELT SEASONAL.",
+                "body": f"{weather_posts} posts mentioned weather, sun, rain, or season. The garden notices — even when nobody's looking.",
+                "highlight_big": "Wellness lives<br>outside the office.",
+                "highlight_body": "When a wellness channel reflects the world outside — sunsets, walks, weekend weather — that means people are bringing real life into work, not pretending it's separate.",
             },
         })
 
@@ -1226,6 +1576,39 @@ def main():
             "heading": theme_heading,
         },
         "real_story": real_story,
+        # New aggregates (Spotify-style data)
+        "communication": {
+            "avg_post_length_words": avg_post_length_words,
+            "avg_post_length_chars": avg_post_length_chars,
+            "reading_time_min": reading_time_min,
+            "typing_time_min": typing_time_min,
+            "avg_thread_depth": avg_thread_depth,
+            "reaction_reach_pct": reaction_reach_pct,
+            "avg_first_reply_min": avg_first_reply_min,
+            "question_marks_total": question_marks_total,
+            "caps_messages": caps_messages,
+            "emoji_only_posts": emoji_only_posts,
+            "total_messages": total_messages,
+            "total_words_chan": total_words_chan,
+            "total_chars": total_chars,
+        },
+        "patterns": {
+            "power_hour": {"datetime": power_hour_str, "count": power_hour_count},
+            "mood_arc": mood_arc,
+            "weather_posts": weather_posts,
+            "food_posts": food_posts,
+            "pet_posts": pet_posts,
+            "bilingual_posts": bilingual_posts,
+            "food_specifics": top_food_specifics,
+            "cross_role_count": cross_role_count,
+            "weekend_pct": weekend_pct,
+            "late_night_count": len(late_night_posters),
+            "early_bird_count": len(early_bird_posters),
+            "top_opener": list(top_opener) if top_opener else None,
+            "top_closer": list(top_closer) if top_closer else None,
+        },
+        "aura": aura_label,
+        "color_palette": palette_top5,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
 

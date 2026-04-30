@@ -1762,7 +1762,7 @@
       "photos_shared": 4,
       "active_hour": 9,
       "active_label": "Morning Person ☀️",
-      "bestie": "Samantha",
+      "bestie": "Nicole",
       "most_hyped": 6
     },
     {
@@ -1987,7 +1987,7 @@
       "photos_shared": 2,
       "active_hour": 11,
       "active_label": "Morning Person ☀️",
-      "bestie": "Ana",
+      "bestie": "Nicole",
       "most_hyped": 3
     },
     {
@@ -2030,7 +2030,7 @@
       "photos_shared": 0,
       "active_hour": 14,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Ana",
+      "bestie": "Razelle",
       "most_hyped": 0
     },
     {
@@ -2078,7 +2078,7 @@
       "photos_shared": 1,
       "active_hour": 10,
       "active_label": "Morning Person ☀️",
-      "bestie": "Samantha",
+      "bestie": "Nicole",
       "most_hyped": 3
     },
     {
@@ -2134,7 +2134,7 @@
       "photos_shared": 0,
       "active_hour": 12,
       "active_label": "Lunch Poster 🍽️",
-      "bestie": "leslie",
+      "bestie": "Nicole",
       "most_hyped": 0
     },
     {
@@ -2186,7 +2186,7 @@
       "photos_shared": 0,
       "active_hour": 22,
       "active_label": "Night Owl 🦉",
-      "bestie": "Chellsea",
+      "bestie": "Nicole",
       "most_hyped": 0
     },
     {
@@ -2298,7 +2298,7 @@
       "photos_shared": 0,
       "active_hour": 10,
       "active_label": "Morning Person ☀️",
-      "bestie": "Samantha",
+      "bestie": "Nicole",
       "most_hyped": 0
     },
     {
@@ -2518,7 +2518,7 @@
       "photos_shared": 5,
       "active_hour": 14,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Stephany",
+      "bestie": "Alex",
       "most_hyped": 8
     },
     {
@@ -2554,7 +2554,7 @@
       "photos_shared": 0,
       "active_hour": 16,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Samantha",
+      "bestie": "Nicole",
       "most_hyped": 0
     },
     {
@@ -2608,7 +2608,7 @@
       "photos_shared": 2,
       "active_hour": 18,
       "active_label": "Evening Energy 🌆",
-      "bestie": "A.J.",
+      "bestie": "Nicole",
       "most_hyped": 7
     }
   ],
@@ -2654,24 +2654,24 @@
   },
   "did_you_know": [
     {
-      "emoji": "📸",
-      "color": "amber",
-      "text": "<b>The Garden's Official Photographer:</b> Katherin Hernandez (62 photos)"
-    },
-    {
-      "emoji": "💬",
-      "color": "green",
-      "text": "Your top word: <b>love</b>. Said <b>94 times</b>."
-    },
-    {
       "emoji": "🛋️",
       "color": "amber",
       "text": "Plot twist: <b>28%</b> of posts came on weekends. Wellness doesn't clock out."
     },
     {
-      "emoji": "📸",
-      "color": "green",
-      "text": "<b>April 10 at 11:27 AM</b> — Cristabell's post got <b>12 reactions</b>. The garden's loudest moment."
+      "emoji": "📖",
+      "color": "blue",
+      "text": "If you read every message back-to-back, it'd take <b>33 minutes</b>."
+    },
+    {
+      "emoji": "📝",
+      "color": "blue",
+      "text": "Average post: <b>5.8 words</b>. Short and sweet."
+    },
+    {
+      "emoji": "🌌",
+      "color": "blue",
+      "text": "<b>The Garden's April Aura:</b> Warm + Energized"
     }
   ],
   "insight_theme": {
@@ -2680,11 +2680,76 @@
     "heading": "THE\nDETAILS."
   },
   "real_story": {
-    "eyebrow": "the connector",
-    "heading": "LESLIE<br>HELD IT TOGETHER.",
-    "body": "Showed up in 683 different threads. Reacted, replied, started conversations. The kind of person who makes a channel feel like a place.",
-    "highlight_big": "Every team<br>has a glue.",
-    "highlight_body": "It's rarely the person posting the most. It's the person showing up everywhere — quietly making sure no post goes unanswered."
+    "eyebrow": "the collective output",
+    "heading": "THIS MONTH,<br>YOU WROTE A BOOK.",
+    "body": "Combined, you typed 8,335 words across 1437 messages. Reading time: 33 minutes. Typing time: about 208 minutes — a part-time job of love.",
+    "highlight_big": "Words this team typed:<br>8,335.",
+    "highlight_body": "That's not chatter. That's care, transcribed. Every word is someone showing up — even if it was a quick 'love this!' thrown into a thread."
   },
-  "updated_at": "2026-04-30 01:11"
+  "communication": {
+    "avg_post_length_words": 5.8,
+    "avg_post_length_chars": 31,
+    "reading_time_min": 33,
+    "typing_time_min": 208,
+    "avg_thread_depth": 5.1,
+    "reaction_reach_pct": 96,
+    "avg_first_reply_min": 98,
+    "question_marks_total": 11,
+    "caps_messages": 2,
+    "emoji_only_posts": 9,
+    "total_messages": 1437,
+    "total_words_chan": 8335,
+    "total_chars": 44493
+  },
+  "patterns": {
+    "power_hour": {
+      "datetime": "April 22 at 8:57 PM",
+      "count": 6
+    },
+    "mood_arc": [
+      0.16,
+      0.16,
+      0.15,
+      0.06
+    ],
+    "weather_posts": 17,
+    "food_posts": 36,
+    "pet_posts": 5,
+    "bilingual_posts": 2,
+    "food_specifics": [
+      [
+        "cake",
+        1
+      ],
+      [
+        "salad",
+        1
+      ],
+      [
+        "coffee",
+        1
+      ]
+    ],
+    "cross_role_count": 1426,
+    "weekend_pct": 28,
+    "late_night_count": 11,
+    "early_bird_count": 0,
+    "top_opener": [
+      "Katherin Hernandez",
+      6
+    ],
+    "top_closer": [
+      "leslie orellana-amaya",
+      4
+    ]
+  },
+  "aura": "Warm + Energized",
+  "color_palette": [
+    "❤️",
+    "😂",
+    "😋",
+    "🔥",
+    "🙌"
+  ],
+  "updated_at": "2026-04-30 01:27"
 }

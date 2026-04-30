@@ -705,8 +705,20 @@ body::before{
     <div class="anim-up" style="font-size:clamp(48px,12vw,80px);margin-bottom:24px;">🌱</div>
 
     <!-- Headline -->
-    <div class="anim-up-2" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,15vw,120px);line-height:.88;color:#FFFFFF;letter-spacing:-.02em;margin-bottom:24px;">
-      SEE YOU<br>IN APRIL.
+    <div class="anim-up-2" id="closingHeadline" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(56px,15vw,120px);line-height:.88;color:#FFFFFF;letter-spacing:-.02em;margin-bottom:24px;">
+      SEE YOU<br>NEXT MONTH.
+    </div>
+
+    <!-- Aura tag -->
+    <div class="anim-up-3" id="auraTag" style="display:none;margin-bottom:18px;">
+      <div style="font-family:'Cabin',sans-serif;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(159,225,203,0.55);margin-bottom:6px;">your aura this month</div>
+      <div id="auraLabel" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(28px,5vw,40px);color:#00FF9F;text-shadow:0 0 16px rgba(0,255,159,0.4);letter-spacing:.02em;"></div>
+    </div>
+
+    <!-- Color palette -->
+    <div class="anim-up-3" id="paletteWrap" style="display:none;margin-bottom:32px;">
+      <div style="font-family:'Cabin',sans-serif;font-size:9px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(159,225,203,0.55);margin-bottom:8px;">your reaction palette</div>
+      <div id="palette" style="display:flex;justify-content:center;gap:10px;font-size:32px;"></div>
     </div>
 
     <!-- Subline -->
@@ -792,7 +804,7 @@ function initWrapped() {
     if (rsHB && rs.highlight_body) rsHB.textContent = rs.highlight_body;
   }
 
-  // ── Awards eyebrow + dimensions text + footer month ────────────
+  // ── Awards eyebrow + dimensions text + footer month + closing ──
   if (D.month) {
     var monthShort = D.month.split(' ')[0]; // "April" from "April 2026"
     var ae = document.getElementById('awardsEyebrow');
@@ -801,6 +813,33 @@ function initWrapped() {
     if (fm) fm.textContent = D.month;
     var db = document.getElementById('dimensionsBloomedText');
     if (db) db.textContent = 'dimensions bloomed in ' + monthShort + '. The other four are an open invitation. 🌱';
+
+    // Closing: next month name
+    var closingH = document.getElementById('closingHeadline');
+    if (closingH) {
+      var MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+      var idx = MONTHS.indexOf(monthShort);
+      var nextMonth = (idx >= 0) ? MONTHS[(idx + 1) % 12] : 'NEXT MONTH';
+      closingH.innerHTML = 'SEE YOU<br>IN ' + nextMonth.toUpperCase() + '.';
+    }
+  }
+
+  // ── Aura tag ────────────────────────────────────────────────────
+  var auraTag = document.getElementById('auraTag');
+  var auraLabel = document.getElementById('auraLabel');
+  if (D.aura && auraTag && auraLabel) {
+    auraLabel.textContent = D.aura;
+    auraTag.style.display = '';
+  }
+
+  // ── Color palette ───────────────────────────────────────────────
+  var palette = document.getElementById('palette');
+  var paletteWrap = document.getElementById('paletteWrap');
+  if (palette && paletteWrap && D.color_palette && D.color_palette.length) {
+    palette.innerHTML = D.color_palette.map(function(e) {
+      return '<span style="filter:drop-shadow(0 0 8px rgba(0,255,159,0.3));">' + e + '</span>';
+    }).join('');
+    paletteWrap.style.display = '';
   }
 })();
 

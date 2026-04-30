@@ -58,7 +58,9 @@ BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
 USER_TOKEN = os.environ.get("SLACK_USER_TOKEN", "")
 
 if not BOT_TOKEN or not USER_TOKEN:
-    # Try loading from .env file if it exists
+    # Try loading from .env file — but DO NOT override env vars that are already set
+    # (even to empty string). This lets `SLACK_WEBHOOK_URL= python script.py` actually
+    # disable the webhook for safe testing.
     env_path = os.path.join(SCRIPT_DIR, ".env")
     if os.path.exists(env_path):
         with open(env_path) as f:
@@ -66,7 +68,7 @@ if not BOT_TOKEN or not USER_TOKEN:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
                     key, val = line.split("=", 1)
-                    os.environ[key.strip()] = val.strip()
+                    os.environ.setdefault(key.strip(), val.strip())
         BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
         USER_TOKEN = os.environ.get("SLACK_USER_TOKEN", "")
 
@@ -285,6 +287,8 @@ def main():
     parser.add_argument("--week", type=int, help="Week number to process (auto-detect if omitted)")
     parser.add_argument("--month", type=str, help='Month label like "April 2026" (auto-detect if omitted)')
     parser.add_argument("--dry-run", action="store_true", help="Calculate points but don't write files")
+    parser.add_argument("--simulate-date", help="Simulate today's date as YYYY-MM-DD (for testing wrapped detection)")
+    parser.add_argument("--no-post", action="store_true", help="Skip posting to Slack (writes files but stays silent)")
     args = parser.parse_args()
 
     # ── Load & validate config ────────────────────────────────────
@@ -490,9 +494,46 @@ def main():
     print(summary_text)
     print(f"{'─' * 50}\n")
 
+    # Detect wrapped Sunday early so dry-run can preview the monthly path
+    _today_for_check = args.simulate_date if args.simulate_date else datetime.now().date().isoformat()
+    _is_wrapped_sunday = any(
+        info.get("wrapped_post_date") == _today_for_check
+        for info in config.get("months", {}).values()
+    )
+    if _is_wrapped_sunday and args.dry_run:
+        wrapped_label = next(
+            label for label, info in config["months"].items()
+            if info.get("wrapped_post_date") == _today_for_check
+        )
+        form_url = config.get("exchange_form_url", "")
+        from datetime import timedelta as _td
+        close_dt = datetime.strptime(_today_for_check, "%Y-%m-%d") + _td(days=7)
+        month_short = wrapped_label.split()[0]
+        sample_top = sorted(scores, key=lambda s: -s["points"])[:3]
+        sample_lines = []
+        for i, p in enumerate(sample_top):
+            medal = ["🥇", "🥈", "🥉"][i]
+            nm = " ".join(w.capitalize() if w[0].islower() else w for w in p["name"].split())
+            sample_lines.append(f"{medal} {nm} — ?? pts (would be from monthly wrapped totals)")
+        wrapped_url = "https://amigocare-aba.github.io/zengarden-wrapped/index_wrapped.html"
+        preview_msg = (
+            f"*{month_short} Wrapped is here* 🌱\n\n"
+            + "\n".join(sample_lines)
+            + f"\n\nSee your full {month_short} recap → <{wrapped_url}|wrapped page>"
+            + "\nDon't forget to tap your name to share your results on social! 📸"
+            + f"\n\n🎁 Redeem your points → <{form_url}|form>"
+            + f"\nForm closes {close_dt.strftime('%A %B %-d')}"
+        )
+        print(f"\n🌱 SIMULATED MONTHLY POST (would go to #zengarden):\n")
+        print("─" * 50)
+        print(preview_msg)
+        print("─" * 50)
+        print(f"\n   Form URL: {form_url}")
+        print(f"   Wrapped page: {wrapped_url}")
+
     # ── DRY RUN: stop here ────────────────────────────────────────
     if args.dry_run:
-        print("🧪 DRY RUN complete — no files written")
+        print("\n🧪 DRY RUN complete — no files written")
         write_status({
             "last_run": datetime.now().isoformat(timespec="seconds"),
             "status": "dry_run",
@@ -604,16 +645,36 @@ def main():
     print(f"💬 Summary → {SUMMARY_FILE}")
 
     # 3b. Detect monthly wrapped Sunday vs regular weekly
-    today_str = datetime.now().date().isoformat()
+    today_str = args.simulate_date if args.simulate_date else datetime.now().date().isoformat()
+    if args.simulate_date:
+        print(f"\n🎭 SIMULATING TODAY = {today_str}")
     wrapped_month = None
     for label, info in config.get("months", {}).items():
         if info.get("wrapped_post_date") == today_str:
             wrapped_month = label
             break
 
+    # If --simulate-date or --no-post is set, never post live to Slack
+    posting_enabled = not (args.simulate_date or args.no_post)
+
     if wrapped_month:
         # ── MONTHLY WRAPPED MODE ───────────────────────────────────
         print(f"\n🌱 Today is monthly wrapped Sunday for {wrapped_month}")
+
+        # SAFETY: refuse to run wrapped extraction if the month isn't complete
+        month_info = config["months"].get(wrapped_month, {})
+        month_end = datetime.strptime(month_info["end"], "%Y-%m-%d").date()
+        # Use simulated or real today
+        check_today = (datetime.strptime(today_str, "%Y-%m-%d").date()
+                       if args.simulate_date else datetime.now().date())
+        if check_today <= month_end:
+            print(f"⚠️  REFUSING to run wrapped extraction:")
+            print(f"   Month '{wrapped_month}' ends {month_end} (today is {check_today}).")
+            print(f"   Wrapped should only run AFTER the month is complete.")
+            print(f"   Skipping wrapped — will resume normal weekly behavior.")
+            wrapped_month = None  # Fall through to weekly post
+
+    if wrapped_month:
         print("   Running wrapped extraction...")
         import subprocess
         result = subprocess.run(
@@ -627,7 +688,7 @@ def main():
         else:
             print("   Wrapped data generated ✓")
 
-        # Post monthly Slack message
+        # Build the monthly Slack message
         wrapped_json_path = os.path.join(SCRIPT_DIR, "zen_garden_wrapped_data.json")
         if os.path.exists(wrapped_json_path):
             with open(wrapped_json_path) as f:
@@ -643,7 +704,6 @@ def main():
             form_url = config.get("exchange_form_url", "")
             month_short = wrapped_month.split()[0]
 
-            # Form close = wrapped_post_date + 7 days
             close_date = (datetime.strptime(today_str, "%Y-%m-%d") + timedelta(days=7))
             close_str = close_date.strftime("%A %B %-d")
 
@@ -655,14 +715,23 @@ def main():
                 + f"\n\n🎁 Redeem your points → <{form_url}|form>"
                 + f"\nForm closes {close_str}"
             )
-            post_to_slack(monthly_msg)
+            if posting_enabled:
+                post_to_slack(monthly_msg)
+            else:
+                print("\n🔇 Slack post SUPPRESSED (--no-post or --simulate-date)")
+                print("─" * 50)
+                print(monthly_msg)
+                print("─" * 50)
         else:
             print("⚠️  No wrapped JSON to post")
     else:
         # ── REGULAR WEEKLY POST ────────────────────────────────────
         page_url = "https://amigocare-aba.github.io/zengarden-wrapped/weekly.html"
         slack_msg = summary_text + f"\n\n📊 <{page_url}|View full scoreboard>"
-        post_to_slack(slack_msg)
+        if posting_enabled:
+            post_to_slack(slack_msg)
+        else:
+            print("\n🔇 Slack post SUPPRESSED (--no-post or --simulate-date)")
 
     # 4. Run status (audit artifact)
     write_status({

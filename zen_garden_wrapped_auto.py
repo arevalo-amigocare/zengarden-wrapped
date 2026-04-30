@@ -56,7 +56,7 @@ if not BOT_TOKEN or not USER_TOKEN:
                 line = line.strip()
                 if line and not line.startswith("#") and "=" in line:
                     k, v = line.split("=", 1)
-                    os.environ[k.strip()] = v.strip()
+                    os.environ.setdefault(k.strip(), v.strip())
         BOT_TOKEN = os.environ.get("SLACK_BOT_TOKEN", "")
         USER_TOKEN = os.environ.get("SLACK_USER_TOKEN", "")
 
@@ -326,6 +326,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--month", help='Month label like "April 2026" (auto-detect if blank)')
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument("--force", action="store_true", help='Run even if the month is not yet complete (safety override)')
     args = parser.parse_args()
 
     config = load_config()
@@ -363,6 +364,14 @@ def main():
     start_date = datetime.strptime(month_info["start"], "%Y-%m-%d")
     end_date = datetime.strptime(month_info["end"], "%Y-%m-%d")
     end_exclusive = end_date + timedelta(days=1)
+
+    # SAFETY: refuse to run if the month isn't complete yet (override with --force)
+    if not args.force and datetime.now().date() <= end_date.date():
+        print(f"❌ REFUSING to run wrapped extraction for '{month_label}'.")
+        print(f"   The month ends {end_date.date()} (today is {datetime.now().date()}).")
+        print(f"   Wrapped should only run AFTER the month is complete.")
+        print(f"   To override (testing only): pass --force")
+        sys.exit(2)
 
     print(f"🌱 Wrapped: {month_label} ({start_date.strftime('%b %-d')} – {end_date.strftime('%b %-d')})")
     if args.dry_run:

@@ -4,18 +4,18 @@
   "total": 67,
   "active": 45,
   "participation_rate": 67.2,
-  "total_pts": 2175,
+  "total_pts": 2203,
   "total_payout": 760,
   "total_posts": 253,
   "total_comments": 1184,
-  "bcba_avg": 43.2,
-  "rbt_avg": 54.0,
+  "bcba_avg": 43.8,
+  "rbt_avg": 54.76,
   "lead_avg": 51.33,
   "wk_totals": [
     706,
     635,
     527,
-    307
+    335
   ],
   "dim_counts": {
     "Social": 33,
@@ -95,7 +95,7 @@
     {
       "name": "leslie orellana-amaya",
       "role": "RBT",
-      "pts": 263,
+      "pts": 265,
       "bonus": "$50",
       "streak": 4,
       "ci": 100,
@@ -109,7 +109,7 @@
       "wk1": 113,
       "wk2": 111,
       "wk3": 33,
-      "wk4": 6,
+      "wk4": 8,
       "sentiment": 0.27,
       "top_words": [
         [
@@ -153,7 +153,7 @@
     {
       "name": "Nicole Burke",
       "role": "BCBA",
-      "pts": 161,
+      "pts": 165,
       "bonus": "$50",
       "streak": 4,
       "ci": 100,
@@ -163,11 +163,11 @@
       "encourage": 90,
       "conn": 484,
       "style": "Pure Engager",
-      "trend": "Steady",
+      "trend": "Up",
       "wk1": 22,
       "wk2": 65,
       "wk3": 52,
-      "wk4": 22,
+      "wk4": 26,
       "sentiment": 0.31,
       "top_words": [
         [
@@ -267,7 +267,7 @@
     {
       "name": "Jennifer Leiva",
       "role": "RBT",
-      "pts": 139,
+      "pts": 141,
       "bonus": "$50",
       "streak": 4,
       "ci": 100,
@@ -281,7 +281,7 @@
       "wk1": 48,
       "wk2": 48,
       "wk3": 29,
-      "wk4": 14,
+      "wk4": 16,
       "sentiment": 0.09,
       "top_words": [
         [
@@ -324,7 +324,7 @@
     {
       "name": "Katherin Hernandez",
       "role": "RBT",
-      "pts": 127,
+      "pts": 131,
       "bonus": "$50",
       "streak": 4,
       "ci": 100,
@@ -338,7 +338,7 @@
       "wk1": 44,
       "wk2": 29,
       "wk3": 35,
-      "wk4": 19,
+      "wk4": 23,
       "sentiment": 0.39,
       "top_words": [
         [
@@ -440,6 +440,64 @@
       "most_hyped": 11
     },
     {
+      "name": "Pamela martinez gonzalez",
+      "role": "RBT",
+      "pts": 104,
+      "bonus": "$50",
+      "streak": 4,
+      "ci": 100,
+      "dim": "Intellectual",
+      "wellness": 7,
+      "stress": 0,
+      "encourage": 67,
+      "conn": 227,
+      "style": "Engager",
+      "trend": "Down",
+      "wk1": 27,
+      "wk2": 37,
+      "wk3": 23,
+      "wk4": 17,
+      "sentiment": 0.13,
+      "top_words": [
+        [
+          "run",
+          4
+        ],
+        [
+          "today",
+          4
+        ],
+        [
+          "love",
+          3
+        ],
+        [
+          "nice",
+          3
+        ],
+        [
+          "gracias",
+          2
+        ]
+      ],
+      "top_emojis": [],
+      "top_reactions": [
+        "❤️",
+        ":squirrel:",
+        "🤣"
+      ],
+      "reactions_given": [
+        "❤️",
+        "🙌",
+        "😂"
+      ],
+      "photos_shared": 14,
+      "active_hour": 14,
+      "active_label": "Afternoon Vibes 🌤️",
+      "bestie": "leslie",
+      "most_hyped": 9
+    },
+    {
       "name": "Samantha Collazo",
       "role": "RBT",
       "pts": 103,
@@ -498,67 +556,9 @@
       "most_hyped": 3
     },
     {
-      "name": "Pamela martinez gonzalez",
-      "role": "RBT",
-      "pts": 102,
-      "bonus": "$50",
-      "streak": 4,
-      "ci": 100,
-      "dim": "Intellectual",
-      "wellness": 7,
-      "stress": 0,
-      "encourage": 67,
-      "conn": 227,
-      "style": "Engager",
-      "trend": "Down",
-      "wk1": 27,
-      "wk2": 37,
-      "wk3": 23,
-      "wk4": 15,
-      "sentiment": 0.13,
-      "top_words": [
-        [
-          "run",
-          4
-        ],
-        [
-          "today",
-          4
-        ],
-        [
-          "love",
-          3
-        ],
-        [
-          "nice",
-          3
-        ],
-        [
-          "gracias",
-          2
-        ]
-      ],
-      "top_emojis": [],
-      "top_reactions": [
-        "❤️",
-        ":squirrel:",
-        "🤣"
-      ],
-      "reactions_given": [
-        "❤️",
-        "🙌",
-        "😂"
-      ],
-      "photos_shared": 14,
-      "active_hour": 14,
-      "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "leslie",
-      "most_hyped": 9
-    },
-    {
       "name": "Razelle Abogadie",
       "role": "RBT",
-      "pts": 100,
+      "pts": 102,
       "bonus": "$50",
       "streak": 4,
       "ci": 100,
@@ -572,7 +572,7 @@
       "wk1": 32,
       "wk2": 11,
       "wk3": 39,
-      "wk4": 18,
+      "wk4": 20,
       "sentiment": 0.33,
       "top_words": [
         [
@@ -618,7 +618,7 @@
     {
       "name": "Kimberly Lemus",
       "role": "BCBA",
-      "pts": 86,
+      "pts": 88,
       "bonus": "$50",
       "streak": 4,
       "ci": 100,
@@ -632,7 +632,7 @@
       "wk1": 13,
       "wk2": 25,
       "wk3": 34,
-      "wk4": 14,
+      "wk4": 16,
       "sentiment": 0.24,
       "top_words": [
         [
@@ -736,7 +736,7 @@
     {
       "name": "Ana Plaza",
       "role": "RBT",
-      "pts": 74,
+      "pts": 78,
       "bonus": "$25",
       "streak": 3,
       "ci": 100,
@@ -750,7 +750,7 @@
       "wk1": 18,
       "wk2": 0,
       "wk3": 16,
-      "wk4": 40,
+      "wk4": 44,
       "sentiment": 0.33,
       "top_words": [
         [
@@ -846,7 +846,7 @@
     {
       "name": "Stephany Carrasco",
       "role": "RBT",
-      "pts": 53,
+      "pts": 55,
       "bonus": "$25",
       "streak": 3,
       "ci": 100,
@@ -860,7 +860,7 @@
       "wk1": 13,
       "wk2": 7,
       "wk3": 0,
-      "wk4": 33,
+      "wk4": 35,
       "sentiment": 0.33,
       "top_words": [
         [
@@ -1017,6 +1017,64 @@
       "most_hyped": 7
     },
     {
+      "name": "Laura Outland",
+      "role": "RBT",
+      "pts": 48,
+      "bonus": "$15",
+      "streak": 3,
+      "ci": 100,
+      "dim": "Intellectual",
+      "wellness": 4,
+      "stress": 0,
+      "encourage": 47,
+      "conn": 174,
+      "style": "Engager",
+      "trend": "Up",
+      "wk1": 16,
+      "wk2": 0,
+      "wk3": 15,
+      "wk4": 17,
+      "sentiment": 0.59,
+      "top_words": [
+        [
+          "good",
+          7
+        ],
+        [
+          "looks",
+          6
+        ],
+        [
+          "cute",
+          3
+        ],
+        [
+          "wow",
+          3
+        ],
+        [
+          "tea",
+          2
+        ]
+      ],
+      "top_emojis": [],
+      "top_reactions": [
+        "❤️",
+        ":star-struck:",
+        ":drooling_face:"
+      ],
+      "reactions_given": [
+        "❤️",
+        "💪",
+        "🫶"
+      ],
+      "photos_shared": 8,
+      "active_hour": 9,
+      "active_label": "Morning Person ☀️",
+      "bestie": "leslie",
+      "most_hyped": 9
+    },
+    {
       "name": "Richard Saavedra",
       "role": "RBT",
       "pts": 45,
@@ -1071,64 +1129,6 @@
       "active_label": "Evening Energy 🌆",
       "bestie": "Jennifer",
       "most_hyped": 0
-    },
-    {
-      "name": "Laura Outland",
-      "role": "RBT",
-      "pts": 44,
-      "bonus": "$15",
-      "streak": 3,
-      "ci": 100,
-      "dim": "Intellectual",
-      "wellness": 4,
-      "stress": 0,
-      "encourage": 47,
-      "conn": 174,
-      "style": "Engager",
-      "trend": "Down",
-      "wk1": 16,
-      "wk2": 0,
-      "wk3": 15,
-      "wk4": 13,
-      "sentiment": 0.59,
-      "top_words": [
-        [
-          "good",
-          7
-        ],
-        [
-          "looks",
-          6
-        ],
-        [
-          "cute",
-          3
-        ],
-        [
-          "wow",
-          3
-        ],
-        [
-          "tea",
-          2
-        ]
-      ],
-      "top_emojis": [],
-      "top_reactions": [
-        "❤️",
-        ":star-struck:",
-        ":drooling_face:"
-      ],
-      "reactions_given": [
-        "❤️",
-        "💪",
-        "🫶"
-      ],
-      "photos_shared": 8,
-      "active_hour": 9,
-      "active_label": "Morning Person ☀️",
-      "bestie": "leslie",
-      "most_hyped": 9
     },
     {
       "name": "Pierre",
@@ -2030,7 +2030,7 @@
       "photos_shared": 0,
       "active_hour": 14,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Razelle",
+      "bestie": "Katherin",
       "most_hyped": 0
     },
     {
@@ -2078,7 +2078,7 @@
       "photos_shared": 1,
       "active_hour": 10,
       "active_label": "Morning Person ☀️",
-      "bestie": "Nicole",
+      "bestie": "Jerusha",
       "most_hyped": 3
     },
     {
@@ -2134,7 +2134,7 @@
       "photos_shared": 0,
       "active_hour": 12,
       "active_label": "Lunch Poster 🍽️",
-      "bestie": "Nicole",
+      "bestie": "Katherin",
       "most_hyped": 0
     },
     {
@@ -2186,7 +2186,7 @@
       "photos_shared": 0,
       "active_hour": 22,
       "active_label": "Night Owl 🦉",
-      "bestie": "Nicole",
+      "bestie": "Katherin",
       "most_hyped": 0
     },
     {
@@ -2242,7 +2242,7 @@
       "photos_shared": 1,
       "active_hour": 17,
       "active_label": "Evening Energy 🌆",
-      "bestie": "Samantha",
+      "bestie": "Stephany",
       "most_hyped": 2
     },
     {
@@ -2298,7 +2298,7 @@
       "photos_shared": 0,
       "active_hour": 10,
       "active_label": "Morning Person ☀️",
-      "bestie": "Nicole",
+      "bestie": "Katherin",
       "most_hyped": 0
     },
     {
@@ -2554,7 +2554,7 @@
       "photos_shared": 0,
       "active_hour": 16,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Nicole",
+      "bestie": "Aafia",
       "most_hyped": 0
     },
     {
@@ -2608,7 +2608,7 @@
       "photos_shared": 2,
       "active_hour": 18,
       "active_label": "Evening Energy 🌆",
-      "bestie": "Nicole",
+      "bestie": "A.J.",
       "most_hyped": 7
     }
   ],
@@ -2619,9 +2619,9 @@
     },
     "most_improved": {
       "name": "Ana Plaza",
-      "delta": 22,
+      "delta": 26,
       "wk1": 18,
-      "wk4": 40
+      "wk4": 44
     },
     "most_loved": {
       "name": "leslie orellana-amaya",
@@ -2751,5 +2751,5 @@
     "🔥",
     "🙌"
   ],
-  "updated_at": "2026-04-30 01:27"
+  "updated_at": "2026-04-30 01:43"
 }

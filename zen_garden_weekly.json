@@ -867,26 +867,42 @@
       "scores": [
         {
           "name": "Ana Plaza",
-          "points": 40,
+          "points": 44,
           "role": "RBT",
           "posts": 0,
-          "comments": 20,
+          "comments": 22,
           "group_activities": 0
         },
         {
           "name": "Stephany Carrasco",
-          "points": 33,
+          "points": 35,
           "role": "RBT",
           "posts": 2,
-          "comments": 13,
+          "comments": 14,
           "group_activities": 1
         },
         {
           "name": "Nicole Burke",
-          "points": 22,
+          "points": 26,
           "role": "BCBA",
           "posts": 0,
-          "comments": 11,
+          "comments": 13,
+          "group_activities": 0
+        },
+        {
+          "name": "Katherin Hernandez",
+          "points": 23,
+          "role": "RBT",
+          "posts": 3,
+          "comments": 10,
+          "group_activities": 0
+        },
+        {
+          "name": "Razelle Abogadie",
+          "points": 20,
+          "role": "RBT",
+          "posts": 2,
+          "comments": 9,
           "group_activities": 0
         },
         {
@@ -898,51 +914,35 @@
           "group_activities": 2
         },
         {
-          "name": "Katherin Hernandez",
-          "points": 19,
-          "role": "RBT",
-          "posts": 3,
-          "comments": 8,
-          "group_activities": 0
-        },
-        {
-          "name": "Razelle Abogadie",
-          "points": 18,
-          "role": "RBT",
-          "posts": 2,
-          "comments": 8,
-          "group_activities": 0
-        },
-        {
           "name": "Pamela martinez gonzalez",
-          "points": 15,
+          "points": 17,
           "role": "RBT",
           "posts": 0,
-          "comments": 0,
+          "comments": 1,
           "group_activities": 3
         },
         {
+          "name": "Laura Outland",
+          "points": 17,
+          "role": "RBT",
+          "posts": 2,
+          "comments": 5,
+          "group_activities": 1
+        },
+        {
           "name": "Jennifer Leiva",
-          "points": 14,
+          "points": 16,
           "role": "RBT",
           "posts": 1,
-          "comments": 4,
+          "comments": 5,
           "group_activities": 1
         },
         {
           "name": "Kimberly Lemus",
-          "points": 14,
+          "points": 16,
           "role": "BCBA",
           "posts": 1,
-          "comments": 4,
-          "group_activities": 1
-        },
-        {
-          "name": "Laura Outland",
-          "points": 13,
-          "role": "RBT",
-          "posts": 2,
-          "comments": 3,
+          "comments": 5,
           "group_activities": 1
         },
         {
@@ -970,6 +970,14 @@
           "group_activities": 0
         },
         {
+          "name": "leslie orellana-amaya",
+          "points": 8,
+          "role": "RBT",
+          "posts": 0,
+          "comments": 4,
+          "group_activities": 0
+        },
+        {
           "name": "Cristabell A Harrison",
           "points": 7,
           "role": "RBT",
@@ -992,14 +1000,6 @@
           "posts": 1,
           "comments": 0,
           "group_activities": 1
-        },
-        {
-          "name": "leslie orellana-amaya",
-          "points": 6,
-          "role": "RBT",
-          "posts": 0,
-          "comments": 3,
-          "group_activities": 0
         },
         {
           "name": "Richard Saavedra",
@@ -1111,15 +1111,15 @@
   "cumulative": [
     {
       "name": "leslie orellana-amaya",
-      "points": 263,
+      "points": 265,
       "role": "RBT",
-      "this_week": 6
+      "this_week": 8
     },
     {
       "name": "Nicole Burke",
-      "points": 161,
+      "points": 165,
       "role": "BCBA",
-      "this_week": 22
+      "this_week": 26
     },
     {
       "name": "Jerusha Daniel",
@@ -1129,15 +1129,15 @@
     },
     {
       "name": "Jennifer Leiva",
-      "points": 139,
+      "points": 141,
       "role": "RBT",
-      "this_week": 14
+      "this_week": 16
     },
     {
       "name": "Katherin Hernandez",
-      "points": 127,
+      "points": 131,
       "role": "RBT",
-      "this_week": 19
+      "this_week": 23
     },
     {
       "name": "Alex Arevalo",
@@ -1146,28 +1146,28 @@
       "this_week": 0
     },
     {
+      "name": "Pamela martinez gonzalez",
+      "points": 104,
+      "role": "RBT",
+      "this_week": 17
+    },
+    {
       "name": "Samantha Collazo",
       "points": 103,
       "role": "RBT",
       "this_week": 10
     },
     {
-      "name": "Pamela martinez gonzalez",
+      "name": "Razelle Abogadie",
       "points": 102,
       "role": "RBT",
-      "this_week": 15
-    },
-    {
-      "name": "Razelle Abogadie",
-      "points": 100,
-      "role": "RBT",
-      "this_week": 18
+      "this_week": 20
     },
     {
       "name": "Kimberly Lemus",
-      "points": 86,
+      "points": 88,
       "role": "BCBA",
-      "this_week": 14
+      "this_week": 16
     },
     {
       "name": "Taylor Schindhelm",
@@ -1177,9 +1177,9 @@
     },
     {
       "name": "Ana Plaza",
-      "points": 74,
+      "points": 78,
       "role": "RBT",
-      "this_week": 40
+      "this_week": 44
     },
     {
       "name": "Zendy Wilson",
@@ -1188,16 +1188,16 @@
       "this_week": 4
     },
     {
+      "name": "Stephany Carrasco",
+      "points": 55,
+      "role": "RBT",
+      "this_week": 35
+    },
+    {
       "name": "Melitza",
       "points": 53,
       "role": "RBT",
       "this_week": 12
-    },
-    {
-      "name": "Stephany Carrasco",
-      "points": 53,
-      "role": "RBT",
-      "this_week": 33
     },
     {
       "name": "Jocelyn",
@@ -1206,16 +1206,16 @@
       "this_week": 5
     },
     {
+      "name": "Laura Outland",
+      "points": 48,
+      "role": "RBT",
+      "this_week": 17
+    },
+    {
       "name": "Richard Saavedra",
       "points": 45,
       "role": "RBT",
       "this_week": 5
-    },
-    {
-      "name": "Laura Outland",
-      "points": 44,
-      "role": "RBT",
-      "this_week": 13
     },
     {
       "name": "Pierre",

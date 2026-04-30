@@ -397,6 +397,22 @@ def main():
     sentiment_n = defaultdict(int)
     dim_counts = defaultdict(Counter)  # uid -> Counter of dimensions
 
+    # ── Aggregate trackers for Spotify-style insights ────────────
+    posts_by_day = Counter()              # YYYY-MM-DD -> count
+    posts_by_dow = Counter()              # 0=Mon..6=Sun -> count
+    posts_by_hour_global = Counter()      # 0..23 -> count
+    weekend_posts = 0                     # Sat+Sun
+    weekday_posts = 0
+    late_night_posters = set()            # uids who posted after 22h
+    early_bird_posters = set()            # uids who posted before 7h
+    bilingual_posts = 0                   # posts mixing en+es
+    food_keywords = ['cook', 'meal', 'eat', 'breakfast', 'lunch', 'dinner', 'food', 'recipe', 'salad', 'protein']
+    pet_keywords = ['dog', 'cat', 'pet', 'puppy', 'kitten', 'doggo']
+    food_posts = 0
+    pet_posts = 0
+    top_post = {"reactions": 0, "ts": None, "user": None, "text": None}  # post with most reactions
+    SPANISH_MARKERS = {'que', 'pero', 'como', 'esta', 'muy', 'porque', 'gracias', 'amor', 'hoy', 'dia', 'noche'}
+
     print("📨 Fetching messages...")
     messages = get_all_messages(bot_client, channel_id, oldest, latest)
     print(f"   {len(messages)} top-level messages\n")
@@ -432,6 +448,29 @@ def main():
         dt = datetime.fromtimestamp(ts)
         post_hours[uid][dt.hour] += 1
 
+        # Aggregate trackers for insights
+        posts_by_day[dt.strftime("%Y-%m-%d")] += 1
+        posts_by_dow[dt.weekday()] += 1
+        posts_by_hour_global[dt.hour] += 1
+        if dt.weekday() >= 5:
+            weekend_posts += 1
+        else:
+            weekday_posts += 1
+        if dt.hour >= 22:
+            late_night_posters.add(uid)
+        if dt.hour < 7:
+            early_bird_posters.add(uid)
+
+        # Theme markers
+        text_lower = text.lower()
+        if any(k in text_lower for k in food_keywords):
+            food_posts += 1
+        if any(k in text_lower for k in pet_keywords):
+            pet_posts += 1
+        words_set = set(extract_words(text))
+        if words_set & SPANISH_MARKERS:
+            bilingual_posts += 1
+
         # Sentiment + dimension
         s = sentiment_score(text)
         sentiment_sum[uid] += s
@@ -450,6 +489,16 @@ def main():
                 if ruid in users:
                     reactions_given[ruid][reaction["name"]] += 1
         max_reactions[uid] = max(max_reactions[uid], post_reaction_total)
+
+        # Track the single most-reacted post for "Garden Receipts" insights
+        if post_reaction_total > top_post["reactions"]:
+            top_post = {
+                "reactions": post_reaction_total,
+                "ts": ts,
+                "user": users[uid],
+                "text": text[:120],
+                "datetime": dt.strftime("%B %-d at %-I:%M %p"),
+            }
 
         # Threads
         if msg.get("reply_count", 0) > 0:
@@ -740,6 +789,277 @@ def main():
     # ── Insights ──────────────────────────────────────────────────
     word_counts_global = top_global_words
 
+    # ── SPOTIFY-STYLE THEMED INSIGHTS ─────────────────────────────
+    DOW_NAMES = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    THEMES = ['receipts', 'numbers', 'only_you', 'plot_twists', 'officials']
+
+    def _hour_to_label(h):
+        if h == 0: return "midnight"
+        if h == 12: return "noon"
+        if h < 12: return f"{h}am"
+        return f"{h-12}pm"
+
+    def _format_first_name(name):
+        return name.split(' ')[0] if name else ''
+
+    def _capitalize_first(name):
+        if not name:
+            return ''
+        parts = name.split(' ')
+        return ' '.join(p.capitalize() if p[0].islower() else p for p in parts)
+
+    # Pre-compute commonly used values
+    busiest_day_str = ""
+    busiest_day_count = 0
+    if posts_by_day:
+        busy = posts_by_day.most_common(1)[0]
+        busiest_day_count = busy[1]
+        busy_dt = datetime.strptime(busy[0], "%Y-%m-%d")
+        busiest_day_str = busy_dt.strftime("%B %-d")
+
+    busiest_dow_name = ""
+    busiest_dow_pct = 0
+    if posts_by_dow:
+        busy_dow = posts_by_dow.most_common(1)[0]
+        busiest_dow_name = DOW_NAMES[busy_dow[0]]
+        total_dow = sum(posts_by_dow.values())
+        busiest_dow_pct = round(busy_dow[1] / total_dow * 100) if total_dow else 0
+
+    peak_hour = posts_by_hour_global.most_common(1)[0][0] if posts_by_hour_global else 19
+    weekend_pct = round(weekend_posts / max(weekend_posts + weekday_posts, 1) * 100)
+
+    streak_4_count = sum(1 for p in all_active if p["streak"] == 4)
+    total_reactions = sum(sum(reactions_recv[uid].values()) for uid in reactions_recv)
+    total_words = sum(sum(word_counts[uid].values()) for uid in word_counts)
+    top_word_data = top_global_words[0] if top_global_words else ("love", 0)
+    top_emoji_total = 0
+    global_emoji_counter = Counter()
+    for uid in reactions_recv:
+        global_emoji_counter.update(reactions_recv[uid])
+    top_emoji_data = global_emoji_counter.most_common(1)[0] if global_emoji_counter else ('heart', 0)
+    top_emoji_display = reaction_to_display(top_emoji_data[0])
+
+    # Top by category
+    top_photographer = max(all_active, key=lambda p: p["photos_shared"]) if all_active else None
+    top_commenter = max(all_active, key=lambda p: p["encourage"]) if all_active else None
+    top_connector = max(all_active, key=lambda p: p["conn"]) if all_active else None
+    top_threadmaster = max(all_active, key=lambda p: p["conn"]) if all_active else None
+    top_improver = max(all_active, key=lambda p: p["wk4"] - p["wk1"]) if all_active else None
+
+    # Cross-role engagement (very rough approximation: BCBA-RBT thread pairs)
+    role_by_name = {p["name"]: p["role"] for p in all_active}
+
+    # Theme generators ────────────────────────────────────────────
+    def theme_receipts():
+        out = []
+        if top_post.get("text"):
+            poster_first = _format_first_name(top_post["user"])
+            out.append({
+                "emoji": "📸",
+                "color": "green",
+                "text": f"<b>{top_post['datetime']}</b> — {poster_first}'s post got <b>{top_post['reactions']} reactions</b>. The garden's loudest moment.",
+            })
+        if busiest_day_str and busiest_day_count >= 5:
+            out.append({
+                "emoji": "🔥",
+                "color": "amber",
+                "text": f"On <b>{busiest_day_str}</b>, the channel went OFF. <b>{busiest_day_count} messages</b> in one day.",
+            })
+        if busiest_dow_name:
+            out.append({
+                "emoji": "📅",
+                "color": "blue",
+                "text": f"<b>{busiest_dow_name}</b> is your busiest day — <b>{busiest_dow_pct}%</b> of all activity. And you knew it.",
+            })
+        if top_photographer and top_photographer["photos_shared"] >= 5:
+            out.append({
+                "emoji": "🌅",
+                "color": "coral",
+                "text": f"<b>{_format_first_name(top_photographer['name'])}</b> dropped <b>{top_photographer['photos_shared']} photos</b> this month. Almost one a day.",
+            })
+        return out[:4]
+
+    def theme_numbers():
+        out = []
+        out.append({
+            "emoji": "💬",
+            "color": "green",
+            "text": f"Your top word: <b>{top_word_data[0]}</b>. Said <b>{top_word_data[1]} times</b>.",
+        })
+        out.append({
+            "emoji": "⏰",
+            "color": "blue",
+            "text": f"Your peak hour: <b>{_hour_to_label(peak_hour)}</b> sharp. The channel hits its stride.",
+        })
+        out.append({
+            "emoji": "❤️",
+            "color": "coral",
+            "text": f"<b>{total_reactions:,} reactions</b> shared this month. That's one every <b>{round(30 * 24 * 60 / max(total_reactions, 1))} minutes</b>, all month.",
+        })
+        out.append({
+            "emoji": "✍️",
+            "color": "amber",
+            "text": f"Combined, you typed <b>{total_words:,} words</b>. A novella of love.",
+        })
+        return out[:4]
+
+    def theme_only_you():
+        out = []
+        if top_word_data[1] >= 10:
+            out.append({
+                "emoji": "💚",
+                "color": "green",
+                "text": f"Most teams never say <b>'{top_word_data[0]}'</b> at work. You said it <b>{top_word_data[1]} times</b>.",
+            })
+        if total_reactions >= 500:
+            out.append({
+                "emoji": "🌿",
+                "color": "blue",
+                "text": f"Only Amigo Care could turn a wellness channel into <b>{total_reactions:,} reactions</b> in 30 days.",
+            })
+        if streak_4_count >= 5:
+            out.append({
+                "emoji": "🔥",
+                "color": "coral",
+                "text": f"<b>{streak_4_count} of you</b> showed up every single week. No fall-off, no exception. That's not a habit — that's a culture.",
+            })
+        if active >= 30:
+            out.append({
+                "emoji": "🤝",
+                "color": "amber",
+                "text": f"<b>{active} different people</b> contributed this month. Most workplaces can't say that about anything.",
+            })
+        return out[:4]
+
+    def theme_plot_twists():
+        out = []
+        if weekend_pct >= 15:
+            out.append({
+                "emoji": "🛋️",
+                "color": "amber",
+                "text": f"Plot twist: <b>{weekend_pct}%</b> of posts came on weekends. Wellness doesn't clock out.",
+            })
+        if late_night_posters and len(late_night_posters) >= 3:
+            out.append({
+                "emoji": "🦉",
+                "color": "blue",
+                "text": f"Plot twist: <b>{len(late_night_posters)} of you</b> only post past 10pm. The night shift owns this channel.",
+            })
+        if top_improver and (top_improver["wk4"] - top_improver["wk1"]) >= 10:
+            delta = top_improver["wk4"] - top_improver["wk1"]
+            out.append({
+                "emoji": "🚀",
+                "color": "green",
+                "text": f"Plot twist: <b>{_format_first_name(top_improver['name'])}</b> went from <b>{top_improver['wk1']} pts</b> in week 1 to <b>{top_improver['wk4']} pts</b> in week 4. The comeback of the month.",
+            })
+        if early_bird_posters:
+            ebs = [_format_first_name(users[u]) for u in early_bird_posters if u in users][:2]
+            if ebs:
+                out.append({
+                    "emoji": "🐦",
+                    "color": "coral",
+                    "text": f"Plot twist: <b>{' and '.join(ebs)}</b> post before 7am. They start the garden's day.",
+                })
+        return out[:4]
+
+    def theme_officials():
+        out = []
+        if top_photographer and top_photographer["photos_shared"] > 0:
+            out.append({
+                "emoji": "📸",
+                "color": "amber",
+                "text": f"<b>The Garden's Official Photographer:</b> {_capitalize_first(top_photographer['name'])} ({top_photographer['photos_shared']} photos)",
+            })
+        if top_commenter and top_commenter["encourage"] > 0:
+            out.append({
+                "emoji": "🙌",
+                "color": "green",
+                "text": f"<b>The Garden's Hype Machine:</b> {_capitalize_first(top_commenter['name'])} ({top_commenter['encourage']} reactions given)",
+            })
+        if top_connector and top_connector["conn"] > 0:
+            out.append({
+                "emoji": "🧵",
+                "color": "blue",
+                "text": f"<b>The Garden's Glue:</b> {_capitalize_first(top_connector['name'])} (in {top_connector['conn']} different threads)",
+            })
+        if all_active and all_active[0]["pts"] > 0:
+            out.append({
+                "emoji": "🏆",
+                "color": "coral",
+                "text": f"<b>The Garden's MVP:</b> {_capitalize_first(all_active[0]['name'])} ({all_active[0]['pts']} pts)",
+            })
+        return out[:4]
+
+    THEME_FN = {
+        'receipts': theme_receipts,
+        'numbers': theme_numbers,
+        'only_you': theme_only_you,
+        'plot_twists': theme_plot_twists,
+        'officials': theme_officials,
+    }
+    THEME_TITLES = {
+        'receipts': ('garden receipts', 'NOTABLE\nMOMENTS.'),
+        'numbers': ('by the numbers', 'WAIT,\nREALLY?'),
+        'only_you': ('only you could', 'ONLY\nAMIGO.'),
+        'plot_twists': ('plot twist', 'PLOT\nTWIST.'),
+        'officials': ('the officials', 'GARDEN\nOFFICIALS.'),
+    }
+
+    # Pick theme based on calendar month (rotate through 5)
+    try:
+        month_num = datetime.strptime(month_label, "%B %Y").month
+    except Exception:
+        month_num = 1
+    theme_key = THEMES[(month_num - 1) % len(THEMES)]
+
+    # Generate insights, fall back to other themes if too few
+    did_you_know = THEME_FN[theme_key]()
+    if len(did_you_know) < 4:
+        # Top up from other themes
+        for fallback_key in THEMES:
+            if fallback_key == theme_key:
+                continue
+            for ins in THEME_FN[fallback_key]():
+                if len(did_you_know) >= 4:
+                    break
+                did_you_know.append(ins)
+            if len(did_you_know) >= 4:
+                break
+
+    theme_eyebrow, theme_heading = THEME_TITLES[theme_key]
+
+    # ── REAL STORY (data-driven narrative) ─────────────────────────
+    delta = wk_totals[3] - wk_totals[0] if len(wk_totals) >= 4 else 0
+    if len(wk_totals) >= 4 and wk_totals[0] > 0:
+        delta_pct = (delta / wk_totals[0]) * 100
+    else:
+        delta_pct = 0
+
+    if delta_pct >= 30:
+        real_story = {
+            "eyebrow": "the real story",
+            "heading": "WEEKS 3 & 4 BLOOMED.",
+            "body": "Energy ramped up. The garden got louder week by week. That's momentum.",
+            "highlight_big": f"And {streak_4_count} of you<br>came back stronger.",
+            "highlight_body": "Every single week. Stronger than the last. That's not a streak — that's a rhythm.",
+        }
+    elif delta_pct <= -30:
+        real_story = {
+            "eyebrow": "the real story",
+            "heading": "WEEKS 3 & 4<br>HIT DIFFERENT.",
+            "body": "The whole team slowed down. Life got heavy. Sessions ran long. That's real — and it's okay.",
+            "highlight_big": f"But {streak_4_count} of you<br>never stopped.",
+            "highlight_body": "Every single week. No matter what. That consistency — showing up when it's hard — is what makes this a real community, not just a channel.",
+        }
+    else:
+        real_story = {
+            "eyebrow": "the real story",
+            "heading": "EVERY WEEK.<br>SAME ENERGY.",
+            "body": "No big spikes. No big drops. Just consistent presence — week after week.",
+            "highlight_big": f"{streak_4_count} of you showed up<br>every single week.",
+            "highlight_body": "No fall-off. No fade-out. Just rhythm. That's how a culture is built — quietly, repeatedly, by people who keep showing up.",
+        }
+
     output = {
         "month": month_label,
         "date_range": f"{start_date.strftime('%b %-d')} – {end_date.strftime('%b %-d')}",
@@ -762,6 +1082,13 @@ def main():
         "word_counts": word_counts_global,
         "all_active": all_active,
         "awards": awards,
+        "did_you_know": did_you_know,
+        "insight_theme": {
+            "key": theme_key,
+            "eyebrow": theme_eyebrow,
+            "heading": theme_heading,
+        },
+        "real_story": real_story,
         "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M"),
     }
 

@@ -457,26 +457,9 @@ body::before{
   <div style="position:absolute;border-radius:50%;filter:blur(75px);pointer-events:none;width:320px;height:320px;background:radial-gradient(circle,rgba(239,159,39,0.14),transparent 65%);bottom:-40px;right:-40px;"></div>
   <div style="position:absolute;border-radius:50%;filter:blur(120px);pointer-events:none;width:280px;height:280px;background:radial-gradient(circle,rgba(255,255,255,0.10),transparent 65%);top:40%;left:42%;"></div>
 
-  <div class="eyebrow anim-up">wait, really?</div>
-  <div class="slide-heading anim-up-2" style="color:var(--green);">DID YOU<br>KNOW?</div>
-  <div class="anim-up-3" style="display:flex;flex-direction:column;gap:10px;max-width:1200px;width:100%;margin-top:6px;">
-    <div style="background:var(--bg3);border-radius:14px;padding:18px 20px;border:1px solid rgba(29,158,117,0.12);display:flex;gap:14px;align-items:flex-start;">
-      <div style="font-size:26px;flex-shrink:0;">⏱️</div>
-      <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;">Someone had your back every single hour of every workday. All month long.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:14px;padding:18px 20px;border:1px solid rgba(216,90,48,0.12);display:flex;gap:14px;align-items:flex-start;">
-      <div style="font-size:26px;flex-shrink:0;">❤️</div>
-      <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;">Since October, this team has sent 3,544 hearts. One every 2.5 hours. For six months straight. That's not a stat — that's a culture.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:14px;padding:18px 20px;border:1px solid rgba(239,159,39,0.12);display:flex;gap:14px;align-items:flex-start;">
-      <div style="font-size:26px;flex-shrink:0;">💬</div>
-      <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;">The word <span style="color:var(--green);">love</span> was said 23 times this month. By a healthcare team. At work. Most teams never say it once.</div>
-    </div>
-    <div style="background:var(--bg3);border-radius:14px;padding:18px 20px;border:1px solid rgba(239,159,39,0.12);display:flex;gap:14px;align-items:flex-start;">
-      <div style="font-size:26px;flex-shrink:0;">🔥</div>
-      <div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;">More than half of this team posted every single week without missing once. Not because they had to. Because they wanted to.</div>
-    </div>
-  </div>
+  <div class="eyebrow anim-up" id="dykEyebrow">wait, really?</div>
+  <div class="slide-heading anim-up-2" id="dykHeading" style="color:var(--green);">DID YOU<br>KNOW?</div>
+  <div class="anim-up-3" id="dykList" style="display:flex;flex-direction:column;gap:10px;max-width:1200px;width:100%;margin-top:6px;"></div>
 </div>
 
 <!-- ═══════════ SLIDE 7 — WELLNESS ═══════════ -->
@@ -493,7 +476,7 @@ body::before{
   <!-- Dimension usage statement -->
   <div class="anim-up-3" style="margin-bottom:20px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
     <span style="font-family:'Bebas Neue',sans-serif;font-size:48px;color:#00FF9F;text-shadow:0 0 16px rgba(0,255,159,0.5);line-height:1;">4 of 8</span>
-    <span style="font-size:13px;color:rgba(247,244,238,0.60);">dimensions bloomed in March. The other four are an open invitation. 🌱</span>
+    <span style="font-size:13px;color:rgba(247,244,238,0.60);"><span id="dimensionsBloomedText">dimensions bloomed this month. The other four are an open invitation. 🌱</span></span>
   </div>
 
   <!-- Swipeable dimension cards -->
@@ -508,12 +491,12 @@ body::before{
 <div class="slide" id="slide-3" style="background:var(--bg);">
   <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 50%,rgba(216,90,48,0.05),transparent 60%);pointer-events:none;"></div>
   <div style="max-width:660px;width:100%;">
-    <div class="eyebrow anim-up">the real story</div>
-    <div class="slide-heading anim-up-2" style="color:var(--ink);">WEEKS 3 & 4<br>HIT DIFFERENT.</div>
-    <div class="anim-up-3" style="font-size:16px;line-height:1.8;color:rgba(26,26,46,0.65);margin-bottom:24px;">The whole team slowed down. Life got heavy. Sessions ran long. That's real — and it's okay.</div>
+    <div class="eyebrow anim-up" id="rsEyebrow">the real story</div>
+    <div class="slide-heading anim-up-2" id="rsHeading" style="color:var(--ink);">WEEKS 3 & 4<br>HIT DIFFERENT.</div>
+    <div class="anim-up-3" id="rsBody" style="font-size:16px;line-height:1.8;color:rgba(26,26,46,0.65);margin-bottom:24px;">The whole team slowed down. Life got heavy. Sessions ran long. That's real — and it's okay.</div>
     <div class="anim-up-4" style="background:rgba(29,158,117,0.08);border-radius:18px;padding:26px 28px;border:1px solid rgba(29,158,117,0.2);">
-      <div style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,52px);color:var(--green);line-height:1;letter-spacing:0.02em;margin-bottom:8px;">But 26 of you<br>never stopped.</div>
-      <div style="font-size:14px;color:rgba(26,26,46,0.65);line-height:1.7;">Every single week. No matter what. That consistency — showing up when it's hard — is what makes this a real community, not just a channel.</div>
+      <div id="rsHighlightBig" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(36px,6vw,52px);color:var(--green);line-height:1;letter-spacing:0.02em;margin-bottom:8px;">But 26 of you<br>never stopped.</div>
+      <div id="rsHighlightBody" style="font-size:14px;color:rgba(26,26,46,0.65);line-height:1.7;">Every single week. No matter what.</div>
     </div>
   </div>
 </div>
@@ -523,7 +506,7 @@ body::before{
   <div style="position:absolute;top:-80px;left:-80px;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(127,119,221,0.3),transparent 65%);pointer-events:none;filter:blur(2px);"></div>
   <div style="position:absolute;bottom:-60px;right:-60px;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,rgba(239,159,39,0.25),transparent 65%);pointer-events:none;filter:blur(2px);"></div>
   <div style="position:absolute;top:45%;left:55%;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(29,158,117,0.18),transparent 65%);pointer-events:none;"></div>
-  <div class="eyebrow anim-up" style="color:rgba(192,132,252,0.85);">march hall of fame</div>
+  <div id="awardsEyebrow" class="eyebrow anim-up" style="color:rgba(192,132,252,0.85);">hall of fame</div>
   <div class="slide-heading anim-up-2" style="color:#FFFFFF;text-shadow:0 0 60px rgba(192,132,252,0.3);">IT’S GIVING<br>AWARDS.</div>
   <div class="anim-up-3 award-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:1200px;width:100%;margin-top:8px;">
     <div class="award-card" style="border-color:rgba(255,215,0,0.25);">
@@ -736,7 +719,7 @@ body::before{
 
     <!-- Eyebrow -->
     <div class="anim-up-4" style="font-family:'Cabin',sans-serif;font-size:10px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:rgba(159,225,203,0.45);">
-      Zen Garden · March 2026
+      Zen Garden · <span id="footerMonth">Wrapped</span>
     </div>
   </div>
 </div>
@@ -769,6 +752,56 @@ function initWrapped() {
   var cC = document.getElementById('counter-comments');
   if (cC) cC.setAttribute('data-target', String(D.total_comments || 0));
   if (D.month) document.title = '🌿 Zen Garden Wrapped · ' + D.month;
+
+  // ── Did You Know — themed insights ─────────────────────────────
+  var dykList = document.getElementById('dykList');
+  var dykEyebrow = document.getElementById('dykEyebrow');
+  var dykHeading = document.getElementById('dykHeading');
+  if (dykList && D.did_you_know && D.did_you_know.length) {
+    if (dykEyebrow && D.insight_theme && D.insight_theme.eyebrow) {
+      dykEyebrow.textContent = D.insight_theme.eyebrow;
+    }
+    if (dykHeading && D.insight_theme && D.insight_theme.heading) {
+      dykHeading.innerHTML = D.insight_theme.heading.replace(/\n/g, '<br>');
+    }
+    var COLOR_MAP = {
+      green: { border: 'rgba(29,158,117,0.12)', accent: 'var(--green)' },
+      coral: { border: 'rgba(216,90,48,0.12)', accent: 'var(--coral)' },
+      amber: { border: 'rgba(239,159,39,0.12)', accent: 'var(--amber)' },
+      blue:  { border: 'rgba(46,125,212,0.12)', accent: 'var(--blue)' }
+    };
+    dykList.innerHTML = D.did_you_know.map(function(ins) {
+      var c = COLOR_MAP[ins.color] || COLOR_MAP.green;
+      return '<div style="background:var(--bg3);border-radius:14px;padding:18px 20px;border:1px solid ' + c.border + ';display:flex;gap:14px;align-items:flex-start;">'
+        + '<div style="font-size:26px;flex-shrink:0;">' + ins.emoji + '</div>'
+        + '<div style="font-size:15px;font-weight:700;color:var(--text);line-height:1.5;">' + ins.text + '</div>'
+        + '</div>';
+    }).join('');
+  }
+
+  // ── Real Story — data-driven narrative ─────────────────────────
+  if (D.real_story) {
+    var rs = D.real_story;
+    var rsHeading = document.getElementById('rsHeading');
+    var rsBody = document.getElementById('rsBody');
+    var rsBig = document.getElementById('rsHighlightBig');
+    var rsHB = document.getElementById('rsHighlightBody');
+    if (rsHeading && rs.heading) rsHeading.innerHTML = rs.heading;
+    if (rsBody && rs.body) rsBody.textContent = rs.body;
+    if (rsBig && rs.highlight_big) rsBig.innerHTML = rs.highlight_big;
+    if (rsHB && rs.highlight_body) rsHB.textContent = rs.highlight_body;
+  }
+
+  // ── Awards eyebrow + dimensions text + footer month ────────────
+  if (D.month) {
+    var monthShort = D.month.split(' ')[0]; // "April" from "April 2026"
+    var ae = document.getElementById('awardsEyebrow');
+    if (ae) ae.textContent = monthShort.toLowerCase() + ' hall of fame';
+    var fm = document.getElementById('footerMonth');
+    if (fm) fm.textContent = D.month;
+    var db = document.getElementById('dimensionsBloomedText');
+    if (db) db.textContent = 'dimensions bloomed in ' + monthShort + '. The other four are an open invitation. 🌱';
+  }
 })();
 
 const maxPts=D.all_active[0].pts;

@@ -465,26 +465,76 @@ fetch('run_status.json?t=' + Date.now())
     document.getElementById('links').style.display = '';
   });
 
-// ── NEXT REMINDER ────────────────────────────────────────────────
-(function() {
-  var now = new Date();
+// ── NEXT REMINDER (reads weekly_config.json for accurate dates) ──
+fetch('weekly_config.json?t=' + Date.now())
+  .then(function(r) { return r.json(); })
+  .then(function(cfg) {
+    var todayStr = new Date().toISOString().slice(0, 10);
 
-  // Next Sunday at 12pm ET (16:00 UTC during EDT)
-  var nextSunday = new Date(now);
-  var daysUntilSunday = (7 - now.getDay()) % 7;
-  if (daysUntilSunday === 0 && now.getUTCHours() >= 16) daysUntilSunday = 7;
-  nextSunday.setDate(now.getDate() + daysUntilSunday);
-  nextSunday.setHours(12, 0, 0, 0);
+    // Collect all wrapped dates from config
+    var wrappedDates = [];
+    if (cfg.months) {
+      Object.keys(cfg.months).forEach(function(label) {
+        var info = cfg.months[label];
+        if (info.wrapped_post_date) {
+          wrappedDates.push({ date: info.wrapped_post_date, month: label });
+        }
+      });
+    }
+    wrappedDates.sort(function(a, b) { return a.date.localeCompare(b.date); });
 
-  var weeklyOpts = { weekday: 'long', month: 'short', day: 'numeric' };
-  var weeklyStr = nextSunday.toLocaleDateString('en-US', weeklyOpts) + ' · 12pm ET';
-  document.getElementById('nextWeekly').textContent = weeklyStr;
+    // Find next upcoming Sunday (any Sunday)
+    function nextSundayFrom(dateStr) {
+      var d = new Date(dateStr + 'T12:00:00');
+      var day = d.getDay(); // 0=Sun
+      var daysToAdd = day === 0 ? 0 : (7 - day);
+      d.setDate(d.getDate() + daysToAdd);
+      // If today IS Sunday but past noon ET, go to next Sunday
+      if (day === 0 && new Date().getUTCHours() >= 16) {
+        d.setDate(d.getDate() + 7);
+      }
+      return d;
+    }
 
-  // Last day of current month (Monthly Wrapped placeholder)
-  var lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
-  var monthlyStr = lastDay.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · manual';
-  document.getElementById('nextMonthly').textContent = monthlyStr;
-})();
+    var fmt = function(d) {
+      return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    };
+    var fmtShort = function(d) {
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    };
+
+    // Find next wrapped date
+    var nextWrapped = wrappedDates.find(function(w) { return w.date >= todayStr; });
+
+    // Find next REGULAR weekly Sunday (i.e., next Sunday that ISN'T a wrapped date)
+    var nextSun = nextSundayFrom(todayStr);
+    var maxIters = 52;
+    while (maxIters-- > 0) {
+      var nsStr = nextSun.toISOString().slice(0, 10);
+      var isWrapped = wrappedDates.some(function(w) { return w.date === nsStr; });
+      if (!isWrapped) break;
+      nextSun.setDate(nextSun.getDate() + 7);
+    }
+
+    var weeklyEl = document.getElementById('nextWeekly');
+    var monthlyEl = document.getElementById('nextMonthly');
+    if (weeklyEl) weeklyEl.textContent = fmt(nextSun) + ' · 12pm ET';
+    if (monthlyEl) {
+      if (nextWrapped) {
+        var wrappedDate = new Date(nextWrapped.date + 'T12:00:00');
+        monthlyEl.textContent = fmt(wrappedDate) + ' · ' + nextWrapped.month + ' Wrapped';
+      } else {
+        monthlyEl.textContent = '—';
+      }
+    }
+  })
+  .catch(function() {
+    // Fallback if config can't load
+    var weeklyEl = document.getElementById('nextWeekly');
+    var monthlyEl = document.getElementById('nextMonthly');
+    if (weeklyEl) weeklyEl.textContent = 'Sundays at 12pm ET';
+    if (monthlyEl) monthlyEl.textContent = '—';
+  });
 
 // ── GARDY MESSAGING ──────────────────────────────────────────────
 (function() {

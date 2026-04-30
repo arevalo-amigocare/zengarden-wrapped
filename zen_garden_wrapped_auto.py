@@ -997,66 +997,203 @@ def main():
         'plot_twists': theme_plot_twists,
         'officials': theme_officials,
     }
-    THEME_TITLES = {
-        'receipts': ('garden receipts', 'NOTABLE\nMOMENTS.'),
-        'numbers': ('by the numbers', 'WAIT,\nREALLY?'),
-        'only_you': ('only you could', 'ONLY\nAMIGO.'),
-        'plot_twists': ('plot twist', 'PLOT\nTWIST.'),
-        'officials': ('the officials', 'GARDEN\nOFFICIALS.'),
-    }
 
-    # Pick theme based on calendar month (rotate through 5)
+    # ── COMBINED INSIGHTS — pick 1 from each of 4 themes ───────────
+    # Eyebrows rotate monthly to keep umbrella feel fresh
+    EYEBROWS = [
+        "wait, really?",
+        "fun facts",
+        "behind the scenes",
+        "the receipts",
+        "by the numbers",
+        "garden intel",
+    ]
+    HEADINGS = [
+        "DID YOU\nKNOW?",
+        "INSIDE THE\nGARDEN.",
+        "WAIT,\nREALLY?",
+        "THE\nDETAILS.",
+        "GARDEN\nINTEL.",
+        "FUN\nFACTS.",
+    ]
+
     try:
         month_num = datetime.strptime(month_label, "%B %Y").month
     except Exception:
         month_num = 1
-    theme_key = THEMES[(month_num - 1) % len(THEMES)]
 
-    # Generate insights, fall back to other themes if too few
-    did_you_know = THEME_FN[theme_key]()
-    if len(did_you_know) < 4:
-        # Top up from other themes
-        for fallback_key in THEMES:
-            if fallback_key == theme_key:
+    # Rotate combo of categories used each month so insights feel different
+    # Each month uses 4 of the 5 themes, in different combinations
+    THEME_COMBOS = [
+        ['receipts', 'numbers', 'plot_twists', 'officials'],   # April (month 4)
+        ['numbers', 'only_you', 'officials', 'plot_twists'],   # May
+        ['receipts', 'plot_twists', 'numbers', 'only_you'],    # June
+        ['officials', 'numbers', 'plot_twists', 'receipts'],   # July
+        ['plot_twists', 'only_you', 'receipts', 'officials'],  # August
+        ['only_you', 'receipts', 'numbers', 'plot_twists'],    # September
+    ]
+    combo = THEME_COMBOS[(month_num - 1) % len(THEME_COMBOS)]
+
+    # Pick top insight from each theme in the combo
+    did_you_know = []
+    used_text = set()
+    for theme in combo:
+        if len(did_you_know) >= 4:
+            break
+        for ins in THEME_FN[theme]():
+            if ins["text"] in used_text:
                 continue
-            for ins in THEME_FN[fallback_key]():
+            did_you_know.append(ins)
+            used_text.add(ins["text"])
+            break  # one per theme
+
+    # Top up from any theme if we still don't have 4
+    if len(did_you_know) < 4:
+        for theme in THEME_FN:
+            for ins in THEME_FN[theme]():
                 if len(did_you_know) >= 4:
                     break
+                if ins["text"] in used_text:
+                    continue
                 did_you_know.append(ins)
+                used_text.add(ins["text"])
             if len(did_you_know) >= 4:
                 break
 
-    theme_eyebrow, theme_heading = THEME_TITLES[theme_key]
+    theme_eyebrow = EYEBROWS[(month_num - 1) % len(EYEBROWS)]
+    theme_heading = HEADINGS[(month_num - 1) % len(HEADINGS)]
+    theme_key = "combined"
 
-    # ── REAL STORY (data-driven narrative) ─────────────────────────
+    # ── REAL STORY (data-driven, multiple narrative types) ─────────
+    # Score each story type by signal strength, pick the strongest one.
     delta = wk_totals[3] - wk_totals[0] if len(wk_totals) >= 4 else 0
-    if len(wk_totals) >= 4 and wk_totals[0] > 0:
-        delta_pct = (delta / wk_totals[0]) * 100
-    else:
-        delta_pct = 0
+    delta_pct = (delta / wk_totals[0] * 100) if (len(wk_totals) >= 4 and wk_totals[0] > 0) else 0
+    peak_week_idx = wk_totals.index(max(wk_totals)) if wk_totals else 0
+    quiet_week_idx = wk_totals.index(min(wk_totals)) if wk_totals else 0
 
-    if delta_pct >= 30:
-        real_story = {
-            "eyebrow": "the real story",
-            "heading": "WEEKS 3 & 4 BLOOMED.",
-            "body": "Energy ramped up. The garden got louder week by week. That's momentum.",
-            "highlight_big": f"And {streak_4_count} of you<br>came back stronger.",
-            "highlight_body": "Every single week. Stronger than the last. That's not a streak — that's a rhythm.",
-        }
-    elif delta_pct <= -30:
-        real_story = {
-            "eyebrow": "the real story",
-            "heading": "WEEKS 3 & 4<br>HIT DIFFERENT.",
-            "body": "The whole team slowed down. Life got heavy. Sessions ran long. That's real — and it's okay.",
-            "highlight_big": f"But {streak_4_count} of you<br>never stopped.",
-            "highlight_body": "Every single week. No matter what. That consistency — showing up when it's hard — is what makes this a real community, not just a channel.",
-        }
+    # Find big improver
+    biggest_improver = max(all_active, key=lambda p: p["wk4"] - p["wk1"]) if all_active else None
+    improver_delta = (biggest_improver["wk4"] - biggest_improver["wk1"]) if biggest_improver else 0
+
+    # Find someone who came back from a quiet week
+    comeback = None
+    for p in all_active:
+        weeks = [p["wk1"], p["wk2"], p["wk3"], p["wk4"]]
+        # Look for pattern: had a 0 week, then came back strong
+        for i in range(len(weeks) - 1):
+            if weeks[i] == 0 and weeks[i+1] >= 10:
+                if not comeback or weeks[i+1] > comeback[1]:
+                    comeback = (p["name"], weeks[i+1], i+1)
+
+    # Story candidates with scores
+    stories = []
+
+    # 1) Streak story — high score if many people had 4-week streak
+    if streak_4_count >= 5:
+        stories.append({
+            "score": streak_4_count * 10,
+            "story": {
+                "eyebrow": "the quiet ones who kept going",
+                "heading": "SHOW UP.<br>SHOW UP.",
+                "body": f"While the channel rose and fell, a core group kept the rhythm steady. Same energy, week after week.",
+                "highlight_big": f"{streak_4_count} of you posted<br>every single week.",
+                "highlight_body": "That's not a streak — that's a habit. The kind of habit that turns a channel into a community.",
+            },
+        })
+
+    # 2) Comeback story — someone bounced back
+    if comeback and comeback[1] >= 15:
+        first = comeback[0].split(" ")[0].capitalize()
+        stories.append({
+            "score": comeback[1] * 5,
+            "story": {
+                "eyebrow": "the comeback",
+                "heading": f"{first.upper()}<br>CAME BACK.",
+                "body": f"After a quiet week, {first} showed up with {comeback[1]} points in week {comeback[2]+1}. Sometimes the best story isn't who's loudest — it's who returns.",
+                "highlight_big": f"That's what<br>this place is for.",
+                "highlight_body": "Bad weeks happen. Quiet stretches happen. The garden is here for the days you come back, not just the days you're on.",
+            },
+        })
+
+    # 3) Big improver story
+    if biggest_improver and improver_delta >= 15:
+        first = biggest_improver["name"].split(" ")[0].capitalize()
+        stories.append({
+            "score": improver_delta * 4,
+            "story": {
+                "eyebrow": "the slow burn",
+                "heading": f"{first.upper()}<br>JUST KEPT GOING.",
+                "body": f"Started week 1 with {biggest_improver['wk1']} points. Ended week 4 with {biggest_improver['wk4']}. Quietly, week by week, the energy compounded.",
+                "highlight_big": f"+{improver_delta} pts<br>across the month.",
+                "highlight_body": "Most growth doesn't look dramatic in the moment. It looks like showing up — and showing up a little more next time.",
+            },
+        })
+
+    # 4) Big day story — one day really popped
+    if busiest_day_str and busiest_day_count >= 8:
+        stories.append({
+            "score": busiest_day_count * 3,
+            "story": {
+                "eyebrow": "the day it all happened",
+                "heading": f"ON {busiest_day_str.upper()},<br>EVERYONE SHOWED UP.",
+                "body": f"{busiest_day_count} messages in 24 hours. Photos, comments, reactions — the channel was alive.",
+                "highlight_big": "Every channel<br>has a moment.",
+                "highlight_body": "Some are planned. Some just happen. This one was the kind that you only notice in retrospect — and it's worth noticing.",
+            },
+        })
+
+    # 5) Peak week story
+    if wk_totals and max(wk_totals) >= 1.4 * (sum(wk_totals)/len(wk_totals) if wk_totals else 1):
+        peak_pts = wk_totals[peak_week_idx]
+        stories.append({
+            "score": peak_pts * 2,
+            "story": {
+                "eyebrow": "the wave",
+                "heading": f"WEEK {peak_week_idx+1}<br>WAS A WAVE.",
+                "body": f"{peak_pts} points in a single week — well above the month's average. Whatever was in the air, it caught.",
+                "highlight_big": "That energy<br>is the goal.",
+                "highlight_body": "When a week peaks like this, it's usually because someone leaned in and the rest followed. Notice it. Repeat it.",
+            },
+        })
+
+    # 6) Diversity story — many different people contributed
+    if active >= 30:
+        stories.append({
+            "score": active * 1.5,
+            "story": {
+                "eyebrow": "the chorus",
+                "heading": f"{active} VOICES.<br>ONE GARDEN.",
+                "body": f"Out of {total_users} possible, {active} different people posted, commented, or reacted this month.",
+                "highlight_big": f"{participation_rate}%<br>of the team showed up.",
+                "highlight_body": "It's not about the loudest voice. It's about how many voices feel safe enough to speak. That's the real win.",
+            },
+        })
+
+    # 7) Connection story — lots of cross-team threading
+    if all_active and all_active[0].get("conn", 0) >= 100:
+        top_conn = all_active[0]
+        first = top_conn["name"].split(" ")[0].capitalize()
+        stories.append({
+            "score": top_conn["conn"],
+            "story": {
+                "eyebrow": "the connector",
+                "heading": f"{first.upper()}<br>HELD IT TOGETHER.",
+                "body": f"Showed up in {top_conn['conn']} different threads. Reacted, replied, started conversations. The kind of person who makes a channel feel like a place.",
+                "highlight_big": "Every team<br>has a glue.",
+                "highlight_body": "It's rarely the person posting the most. It's the person showing up everywhere — quietly making sure no post goes unanswered.",
+            },
+        })
+
+    # Pick highest-scoring story (or fall back to streak/steady default)
+    if stories:
+        stories.sort(key=lambda x: -x["score"])
+        real_story = stories[0]["story"]
     else:
         real_story = {
             "eyebrow": "the real story",
             "heading": "EVERY WEEK.<br>SAME ENERGY.",
             "body": "No big spikes. No big drops. Just consistent presence — week after week.",
-            "highlight_big": f"{streak_4_count} of you showed up<br>every single week.",
+            "highlight_big": f"{max(streak_4_count, 1)} of you showed up<br>every single week.",
             "highlight_body": "No fall-off. No fade-out. Just rhythm. That's how a culture is built — quietly, repeatedly, by people who keep showing up.",
         }
 

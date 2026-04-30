@@ -1762,7 +1762,7 @@
       "photos_shared": 4,
       "active_hour": 9,
       "active_label": "Morning Person ☀️",
-      "bestie": "Nicole",
+      "bestie": "Samantha",
       "most_hyped": 6
     },
     {
@@ -1987,7 +1987,7 @@
       "photos_shared": 2,
       "active_hour": 11,
       "active_label": "Morning Person ☀️",
-      "bestie": "Nicole",
+      "bestie": "Ana",
       "most_hyped": 3
     },
     {
@@ -2078,7 +2078,7 @@
       "photos_shared": 1,
       "active_hour": 10,
       "active_label": "Morning Person ☀️",
-      "bestie": "Ana",
+      "bestie": "Samantha",
       "most_hyped": 3
     },
     {
@@ -2186,7 +2186,7 @@
       "photos_shared": 0,
       "active_hour": 22,
       "active_label": "Night Owl 🦉",
-      "bestie": "Laura",
+      "bestie": "Chellsea",
       "most_hyped": 0
     },
     {
@@ -2242,7 +2242,7 @@
       "photos_shared": 1,
       "active_hour": 17,
       "active_label": "Evening Energy 🌆",
-      "bestie": "Stephany",
+      "bestie": "Samantha",
       "most_hyped": 2
     },
     {
@@ -2298,7 +2298,7 @@
       "photos_shared": 0,
       "active_hour": 10,
       "active_label": "Morning Person ☀️",
-      "bestie": "leslie",
+      "bestie": "Samantha",
       "most_hyped": 0
     },
     {
@@ -2518,7 +2518,7 @@
       "photos_shared": 5,
       "active_hour": 14,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Alex",
+      "bestie": "Stephany",
       "most_hyped": 8
     },
     {
@@ -2554,7 +2554,7 @@
       "photos_shared": 0,
       "active_hour": 16,
       "active_label": "Afternoon Vibes 🌤️",
-      "bestie": "Aafia",
+      "bestie": "Samantha",
       "most_hyped": 0
     },
     {
@@ -2608,7 +2608,7 @@
       "photos_shared": 2,
       "active_hour": 18,
       "active_label": "Evening Energy 🌆",
-      "bestie": "leslie",
+      "bestie": "A.J.",
       "most_hyped": 7
     }
   ],
@@ -2654,19 +2654,19 @@
   },
   "did_you_know": [
     {
+      "emoji": "📸",
+      "color": "amber",
+      "text": "<b>The Garden's Official Photographer:</b> Katherin Hernandez (62 photos)"
+    },
+    {
+      "emoji": "💬",
+      "color": "green",
+      "text": "Your top word: <b>love</b>. Said <b>94 times</b>."
+    },
+    {
       "emoji": "🛋️",
       "color": "amber",
       "text": "Plot twist: <b>28%</b> of posts came on weekends. Wellness doesn't clock out."
-    },
-    {
-      "emoji": "🦉",
-      "color": "blue",
-      "text": "Plot twist: <b>11 of you</b> only post past 10pm. The night shift owns this channel."
-    },
-    {
-      "emoji": "🚀",
-      "color": "green",
-      "text": "Plot twist: <b>Ana</b> went from <b>18 pts</b> in week 1 to <b>40 pts</b> in week 4. The comeback of the month."
     },
     {
       "emoji": "📸",
@@ -2675,16 +2675,16 @@
     }
   ],
   "insight_theme": {
-    "key": "plot_twists",
-    "eyebrow": "plot twist",
-    "heading": "PLOT\nTWIST."
+    "key": "combined",
+    "eyebrow": "the receipts",
+    "heading": "THE\nDETAILS."
   },
   "real_story": {
-    "eyebrow": "the real story",
-    "heading": "WEEKS 3 & 4<br>HIT DIFFERENT.",
-    "body": "The whole team slowed down. Life got heavy. Sessions ran long. That's real — and it's okay.",
-    "highlight_big": "But 20 of you<br>never stopped.",
-    "highlight_body": "Every single week. No matter what. That consistency — showing up when it's hard — is what makes this a real community, not just a channel."
+    "eyebrow": "the connector",
+    "heading": "LESLIE<br>HELD IT TOGETHER.",
+    "body": "Showed up in 683 different threads. Reacted, replied, started conversations. The kind of person who makes a channel feel like a place.",
+    "highlight_big": "Every team<br>has a glue.",
+    "highlight_body": "It's rarely the person posting the most. It's the person showing up everywhere — quietly making sure no post goes unanswered."
   },
-  "updated_at": "2026-04-30 01:04"
+  "updated_at": "2026-04-30 01:11"
 }

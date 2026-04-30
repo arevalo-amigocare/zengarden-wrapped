@@ -118,7 +118,7 @@ def load_and_validate_config():
     errors = []
 
     # Required top-level fields
-    for field in ["month", "year", "weeks", "roles"]:
+    for field in ["year", "weeks", "roles"]:
         if field not in config:
             errors.append(f"Missing required field: '{field}'")
 
@@ -127,7 +127,7 @@ def load_and_validate_config():
     if not isinstance(weeks, list) or len(weeks) == 0:
         errors.append("'weeks' must be a non-empty array")
     else:
-        seen_numbers = set()
+        seen_pairs = set()
         for i, week in enumerate(weeks):
             prefix = f"weeks[{i}]"
 
@@ -136,12 +136,15 @@ def load_and_validate_config():
                     errors.append(f"{prefix}: missing '{field}'")
 
             wn = week.get("week_number")
+            month = week.get("month", "")
             if not isinstance(wn, int) or wn < 1:
                 errors.append(f"{prefix}: 'week_number' must be a positive integer")
-            elif wn in seen_numbers:
-                errors.append(f"{prefix}: duplicate week_number {wn}")
             else:
-                seen_numbers.add(wn)
+                pair = (month, wn)
+                if pair in seen_pairs:
+                    errors.append(f"{prefix}: duplicate (month={month}, week_number={wn})")
+                else:
+                    seen_pairs.add(pair)
 
             try:
                 start = datetime.strptime(week.get("start", ""), "%Y-%m-%d")
@@ -280,6 +283,7 @@ def write_status(status_data):
 def main():
     parser = argparse.ArgumentParser(description="Zen Garden Weekly Points Extractor")
     parser.add_argument("--week", type=int, help="Week number to process (auto-detect if omitted)")
+    parser.add_argument("--month", type=str, help='Month label like "April 2026" (auto-detect if omitted)')
     parser.add_argument("--dry-run", action="store_true", help="Calculate points but don't write files")
     args = parser.parse_args()
 
@@ -293,25 +297,28 @@ def main():
     week_entry = None
 
     if args.week:
-        # Explicit week override
-        for w in config["weeks"]:
-            if w["week_number"] == args.week:
-                week_entry = w
-                break
-        if not week_entry:
-            print(f"❌ Week {args.week} not found in config")
+        # Explicit week override; if --month also specified, use that pair
+        candidates = [w for w in config["weeks"] if w["week_number"] == args.week]
+        if args.month:
+            candidates = [w for w in candidates if w.get("month") == args.month]
+        if not candidates:
+            print(f"❌ Week {args.week}" + (f" in {args.month}" if args.month else "") + " not found in config")
             sys.exit(1)
+        # If multiple, pick the most recent past one
+        past = [w for w in candidates if datetime.strptime(w["end"], "%Y-%m-%d").date() < today]
+        week_entry = past[-1] if past else candidates[0]
     else:
         # Auto-detect: find most recent week whose end date has passed
-        for w in sorted(config["weeks"], key=lambda x: x["week_number"], reverse=True):
-            end_date = datetime.strptime(w["end"], "%Y-%m-%d").date()
-            if end_date < today:
-                week_entry = w
-                break
-        if not week_entry:
+        past_weeks = [
+            w for w in config["weeks"]
+            if datetime.strptime(w["end"], "%Y-%m-%d").date() < today
+        ]
+        past_weeks.sort(key=lambda w: datetime.strptime(w["end"], "%Y-%m-%d"))
+        if not past_weeks:
             print("❌ No completed week found. All weeks are in the future.")
-            print("   Use --week N to process a specific week.")
+            print("   Use --week N --month \"April 2026\" to process a specific week.")
             sys.exit(1)
+        week_entry = past_weeks[-1]
 
     week_num = week_entry["week_number"]
     start_date = datetime.strptime(week_entry["start"], "%Y-%m-%d")
@@ -540,24 +547,33 @@ def main():
             existing = json.load(f)
             existing_weeks = existing.get("weeks", [])
 
-    # Idempotent: remove this week if re-running
-    existing_weeks = [w for w in existing_weeks if w["week_number"] != week_num]
+    # Use the month of the week being processed
+    month_label = week_entry.get("month", "")
+
+    # Idempotent: remove this week if re-running (dedupe by month + week_number)
+    existing_weeks = [
+        w for w in existing_weeks
+        if not (w["week_number"] == week_num and w.get("month", "") == month_label)
+    ]
     existing_weeks.append({
         "week_number": week_num,
+        "month": month_label,
         "week_label": f"Week {week_num}",
         "date_range": date_range,
         "scores": scores,
     })
-    existing_weeks.sort(key=lambda w: w["week_number"])
+    # Sort by start of month then week number
+    existing_weeks.sort(key=lambda w: (w.get("month", ""), w["week_number"]))
 
-    # Sum cumulative totals
+    # Cumulative: sum only weeks in the CURRENT month (resets per month)
+    current_month_weeks = [w for w in existing_weeks if w.get("month", "") == month_label]
     cumulative = defaultdict(lambda: {"points": 0, "role": "RBT", "this_week": 0})
-    for week in existing_weeks:
+    for week in current_month_weeks:
         for s in week["scores"]:
             cumulative[s["name"]]["points"] += s["points"]
             cumulative[s["name"]]["role"] = s["role"]
-    latest = existing_weeks[-1]
-    for s in latest["scores"]:
+    # "this_week" = the week we just processed
+    for s in scores:
         cumulative[s["name"]]["this_week"] = s["points"]
 
     cumulative_scores = []
@@ -570,8 +586,8 @@ def main():
         })
 
     output_json = {
-        "month": config["month"],
-        "current_week": max(w["week_number"] for w in existing_weeks),
+        "month": month_label,
+        "current_week": week_num,
         "updated_at": datetime.now().strftime("%Y-%m-%d"),
         "weeks": existing_weeks,
         "cumulative": cumulative_scores,
@@ -587,10 +603,66 @@ def main():
     outputs.append(SUMMARY_FILE)
     print(f"💬 Summary → {SUMMARY_FILE}")
 
-    # 3b. Post summary to Slack channel
-    page_url = "https://amigocare-aba.github.io/zengarden-wrapped/weekly.html"
-    slack_msg = summary_text + f"\n\n📊 <{page_url}|View full scoreboard>"
-    post_to_slack(slack_msg)
+    # 3b. Detect monthly wrapped Sunday vs regular weekly
+    today_str = datetime.now().date().isoformat()
+    wrapped_month = None
+    for label, info in config.get("months", {}).items():
+        if info.get("wrapped_post_date") == today_str:
+            wrapped_month = label
+            break
+
+    if wrapped_month:
+        # ── MONTHLY WRAPPED MODE ───────────────────────────────────
+        print(f"\n🌱 Today is monthly wrapped Sunday for {wrapped_month}")
+        print("   Running wrapped extraction...")
+        import subprocess
+        result = subprocess.run(
+            ["python3", os.path.join(SCRIPT_DIR, "zen_garden_wrapped_auto.py"),
+             "--month", wrapped_month],
+            capture_output=True, text=True
+        )
+        if result.returncode != 0:
+            print("⚠️  Wrapped extraction failed:")
+            print(result.stderr)
+        else:
+            print("   Wrapped data generated ✓")
+
+        # Post monthly Slack message
+        wrapped_json_path = os.path.join(SCRIPT_DIR, "zen_garden_wrapped_data.json")
+        if os.path.exists(wrapped_json_path):
+            with open(wrapped_json_path) as f:
+                wrapped = json.load(f)
+            top_three = wrapped.get("all_active", [])[:3]
+            medals = ["🥇", "🥈", "🥉"]
+            top_lines = []
+            for i, p in enumerate(top_three):
+                nm = " ".join(w.capitalize() if w[0].islower() else w for w in p["name"].split())
+                top_lines.append(f"{medals[i]} {nm} — {p['pts']} pts")
+
+            wrapped_url = "https://amigocare-aba.github.io/zengarden-wrapped/index_wrapped.html"
+            form_url = config.get("exchange_form_url", "")
+            month_short = wrapped_month.split()[0]
+
+            # Form close = wrapped_post_date + 7 days
+            close_date = (datetime.strptime(today_str, "%Y-%m-%d") + timedelta(days=7))
+            close_str = close_date.strftime("%A %B %-d")
+
+            monthly_msg = (
+                f"*{month_short} Wrapped is here* 🌱\n\n"
+                + "\n".join(top_lines)
+                + f"\n\nSee your full {month_short} recap → <{wrapped_url}|wrapped page>"
+                + "\nDon't forget to tap your name to share your results on social! 📸"
+                + f"\n\n🎁 Redeem your points → <{form_url}|form>"
+                + f"\nForm closes {close_str}"
+            )
+            post_to_slack(monthly_msg)
+        else:
+            print("⚠️  No wrapped JSON to post")
+    else:
+        # ── REGULAR WEEKLY POST ────────────────────────────────────
+        page_url = "https://amigocare-aba.github.io/zengarden-wrapped/weekly.html"
+        slack_msg = summary_text + f"\n\n📊 <{page_url}|View full scoreboard>"
+        post_to_slack(slack_msg)
 
     # 4. Run status (audit artifact)
     write_status({

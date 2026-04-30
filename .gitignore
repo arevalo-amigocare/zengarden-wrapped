@@ -5,6 +5,10 @@ zen_garden_weekly_extract.py
 
 # Backups
 *_backup.html
+*_pre_refactor.html
+
+# Python cache
+__pycache__/
 
 # Claude Code local config
 .claude/

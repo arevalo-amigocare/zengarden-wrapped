@@ -7,7 +7,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="Zen Garden">
-<meta property="og:title" content="Zen Garden Wrapped · March 2026">
+<meta property="og:title" content="Zen Garden Wrapped">
 <meta property="og:description" content="48 people. 252 posts. 1,139 comments. 2,604 reactions. When your workplace actually cares about wellness.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://amigocare-aba.github.io/zengarden-wrapped/index_wrapped.html">
@@ -16,11 +16,11 @@
 <meta property="og:image:height" content="630">
 <meta property="og:site_name" content="Amigo Care ABA">
 <meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:title" content="Zen Garden Wrapped · March 2026">
+<meta name="twitter:title" content="Zen Garden Wrapped">
 <meta name="twitter:description" content="48 people. 252 posts. 1,139 comments. 2,604 reactions. When your workplace actually cares about wellness.">
 <meta name="twitter:image" content="https://amigocare-aba.github.io/zengarden-wrapped/og-preview.png">
-<meta name="description" content="Zen Garden Employee Wellness Program — March 2026 Wrapped. 48 people, 252 posts, 1,139 comments, 2,604 reactions.">
-<title>🌿 Zen Garden Wrapped · March 2026</title>
+<meta name="description" content="Zen Garden Employee Wellness Program — Monthly Wrapped recap.">
+<title>🌿 Zen Garden Wrapped</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cabin:ital,wght@0,400;0,600;0,700;1,400&family=Bebas+Neue&display=swap" rel="stylesheet">
@@ -627,35 +627,35 @@ body::before{
   <div class="anim-up-4 type-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;max-width:1200px;width:100%;">
     <div class="type-card">
       <div class="type-icon">🤝</div>
-      <div class="type-count" style="color:var(--green);">12</div>
+      <div class="type-count" id="typeCount-nurturer" style="color:var(--green);">0</div>
       <div class="type-name">The Nurturer</div>
       <div class="type-desc" style="margin-bottom:6px;">Lives in the comments. Your presence lifts the room before you even post.</div>
       <div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(29,158,117,0.1);color:var(--green);display:inline-block;">Comments &gt;&gt; Posts</div>
     </div>
     <div class="type-card">
       <div class="type-icon">💬</div>
-      <div class="type-count" style="color:var(--blue);">15</div>
+      <div class="type-count" id="typeCount-connector" style="color:var(--blue);">0</div>
       <div class="type-name">The Connector</div>
       <div class="type-desc" style="margin-bottom:6px;">You weave people together. Every reply you leave makes the thread feel like a conversation.</div>
       <div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(55,138,221,0.1);color:var(--blue);display:inline-block;">Comments &gt; Posts</div>
     </div>
     <div class="type-card">
       <div class="type-icon">⚖️</div>
-      <div class="type-count" style="color:var(--amber);">9</div>
+      <div class="type-count" id="typeCount-balanced" style="color:var(--amber);">0</div>
       <div class="type-name">The Balanced One</div>
       <div class="type-desc" style="margin-bottom:6px;">You plant seeds and water other people's. The rarest and most complete garden style.</div>
       <div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(239,159,39,0.1);color:var(--amber);display:inline-block;">Posts ≈ Comments</div>
     </div>
     <div class="type-card">
       <div class="type-icon">📢</div>
-      <div class="type-count" style="color:var(--purple);">5</div>
+      <div class="type-count" id="typeCount-storyteller" style="color:var(--purple);">0</div>
       <div class="type-name">The Storyteller</div>
       <div class="type-desc" style="margin-bottom:6px;">You share your world and trust the garden to respond. Your posts start conversations you didn't plan.</div>
       <div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(127,119,221,0.1);color:var(--purple);display:inline-block;">Posts &gt; Comments</div>
     </div>
     <div class="type-card">
       <div class="type-icon">📡</div>
-      <div class="type-count" style="color:var(--muted);">7</div>
+      <div class="type-count" id="typeCount-broadcaster" style="color:var(--muted);">0</div>
       <div class="type-name">The Broadcaster</div>
       <div class="type-desc" style="margin-bottom:6px;">You show up, you share, you move on. The garden sees you — even if you don't stay to chat.</div>
       <div style="font-size:9px;font-weight:700;padding:2px 8px;border-radius:6px;background:rgba(122,132,153,0.1);color:var(--muted);display:inline-block;">Posts &gt;&gt; Comments</div>
@@ -840,6 +840,21 @@ function initWrapped() {
       return '<span style="filter:drop-shadow(0 0 8px rgba(0,255,159,0.3));">' + e + '</span>';
     }).join('');
     paletteWrap.style.display = '';
+  }
+
+  // ── Personality type counts (from D.styles) ─────────────────────
+  if (D.styles) {
+    var typeMap = {
+      'typeCount-nurturer':    D.styles['Pure Engager'] || 0,
+      'typeCount-connector':   D.styles['Engager'] || 0,
+      'typeCount-balanced':    D.styles['Balanced'] || 0,
+      'typeCount-storyteller': D.styles['Broadcaster'] || 0,
+      'typeCount-broadcaster': D.styles['Heavy Broadcaster'] || 0,
+    };
+    Object.keys(typeMap).forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = typeMap[id];
+    });
   }
 })();
 
@@ -1364,7 +1379,7 @@ window.openCrewProfile = function openCrewProfile(idx) {
       + '<div id="captionPicker" style="display:none;padding:0 0 12px;">'
         + '<div style="font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.4);text-align:center;margin-bottom:10px;">copy a caption for your post</div>'
         + '<div style="display:flex;flex-direction:column;gap:6px;">'
-          + '<div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;">my march wrapped 🌿 love this team @amigocare.aba</div>'
+          + '<div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;">my ' + ((D.month || '').split(' ')[0] || '').toLowerCase() + ' wrapped 🌿 love this team @amigocare.aba</div>'
           + '<div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;">A workplace that actually sees you 🌱 @amigocare.aba</div>'
           + '<div class="caption-opt" style="padding:10px 14px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);cursor:pointer;font-size:13px;color:rgba(255,255,255,.75);line-height:1.5;transition:border-color .2s,background .2s;">not your average healthcare job 🌿 @amigocare.aba</div>'
         + '</div>'
